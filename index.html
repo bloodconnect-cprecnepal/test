@@ -3,82 +3,291 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blood Connect Nepal - Production Ready</title>
+    <title>Blood Connect Nepal - Live Network</title>
+    <meta name="description" content="Real-time blood donation network connecting donors, hospitals, and blood banks across Nepal.">
     
     <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        :root { --primary: #dc2626; --secondary: #1e3a8a; }
-        body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #1e293b; }
+        /* --- VARIABLES & BASE --- */
+        :root { 
+            --primary: #dc2626; 
+            --primary-dark: #991b1b;
+            --secondary: #0f172a;
+            --glass: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.5);
+        }
         
-        /* Custom Components */
-        .btn { padding: 12px 24px; border-radius: 8px; font-weight: 600; transition: all 0.2s; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3); }
-        .btn-primary:hover { background: #b91c1c; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .btn-outline { background: transparent; border: 2px solid white; color: white; }
-        .btn-outline:hover { background: white; color: var(--primary); }
-        
-        /* Map & Markers */
-        #map { height: 100%; width: 100%; border-radius: 12px; background: #e2e8f0; }
-        .marker-pin { width: 30px; height: 30px; border-radius: 50% 50% 50% 0; border: 2px solid white; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .marker-critical { background: #dc2626; }
-        .marker-high { background: #f97316; }
-        .marker-normal { background: #22c55e; }
-        
-        /* UI Elements */
-        .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .sos-item { border-left: 4px solid #e2e8f0; padding: 16px; transition: all 0.2s; cursor: pointer; }
-        .sos-item:hover { background: #f8fafc; border-left-color: var(--primary); }
-        .sos-item.critical { border-left-color: #dc2626; }
-        .sos-item.high { border-left-color: #f97316; }
-        
-        /* Loading Skeletons */
-        .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        
-        /* Modal */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-        .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .modal-content { background: white; width: 90%; max-width: 420px; border-radius: 16px; transform: scale(0.95); transition: transform 0.3s; overflow: hidden; }
-        .modal-overlay.active .modal-content { transform: scale(1); }
-        
-        /* Toast */
-        .toast { position: fixed; bottom: 20px; right: 20px; padding: 16px 20px; background: #1e293b; color: white; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); z-index: 2000; transform: translateY(100px); opacity: 0; transition: all 0.3s; display: flex; align-items: center; gap: 12px; }
-        .toast.show { transform: translateY(0); opacity: 1; }
-        .toast.error { background: #dc2626; }
-        .toast.success { background: #16a34a; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: #f8fafc; 
+            color: #334155; 
+            scroll-behavior: smooth;
+        }
 
-        /* Hero Pattern */
-        .hero-pattern {
-            background-color: #1e3a8a;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath opacity='.5' d='M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z'/%3E%3Cpath d='M6 5V0H5v5H0v1h5v94h1V6h94V5H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        /* --- ANIMATIONS --- */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(220, 38, 38, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
+        .animate-fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-pulse-red { animation: pulse-red 2s infinite; }
+
+        /* --- COMPONENTS --- */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn { 
+            padding: 12px 24px; 
+            border-radius: 10px; 
+            font-weight: 600; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            border: none; 
+            cursor: pointer; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 0; height: 0;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+        .btn:active::after { width: 300px; height: 300px; }
+
+        .btn-primary { 
+            background: linear-gradient(135deg, var(--primary) 0%, #ef4444 100%); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3); 
+        }
+        .btn-primary:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4); 
+        }
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-outline { 
+            background: transparent; 
+            border: 2px solid rgba(255,255,255,0.3); 
+            color: white; 
+        }
+        .btn-outline:hover { 
+            background: white; 
+            color: var(--primary); 
+            border-color: white; 
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--primary);
+        }
+        .btn-ghost:hover {
+            background: #fee2e2;
+        }
+
+        /* --- MAP --- */
+        #map { height: 100%; width: 100%; border-radius: 16px; background: #e2e8f0; z-index: 1; }
+        
+        .custom-marker-pin {
+            width: 36px; height: 36px;
+            border-radius: 50% 50% 50% 0;
+            background: white;
+            position: absolute;
+            transform: rotate(-45deg);
+            left: 50%; top: 50%;
+            margin: -18px 0 0 -18px;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid white;
+        }
+        
+        .custom-marker-pin i {
+            transform: rotate(45deg);
+            font-size: 14px;
+        }
+        
+        .marker-pulse {
+            width: 20px; height: 20px;
+            background: rgba(220, 38, 38, 0.4);
+            border-radius: 50%;
+            position: absolute;
+            left: 50%; top: 50%;
+            margin: -10px 0 0 -10px;
+            z-index: -1;
+            animation: pulse-red 2s infinite;
+        }
+
+        /* --- CARDS & LISTS --- */
+        .card { 
+            background: white; 
+            border-radius: 16px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid #f1f5f9;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .sos-item { 
+            padding: 16px; 
+            transition: all 0.2s; 
+            cursor: pointer; 
+            border-bottom: 1px solid #f1f5f9;
+            position: relative;
+            overflow: hidden;
+        }
+        .sos-item:last-child { border-bottom: none; }
+        
+        .sos-item::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 4px;
+            background: #cbd5e1;
+            transition: background 0.3s;
+        }
+
+        .sos-item:hover { background: #f8fafc; }
+        .sos-item:hover::before { background: var(--primary); }
+        
+        .sos-item.critical::before { background: #dc2626; }
+        .sos-item.high::before { background: #f97316; }
+        .sos-item.normal::before { background: #22c55e; }
+
+        /* --- SKELETON LOADING --- */
+        .skeleton { 
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); 
+            background-size: 200% 100%; 
+            animation: shimmer 1.5s infinite; 
+            border-radius: 6px; 
+        }
+
+        /* --- MODAL --- */
+        .modal-overlay { 
+            position: fixed; inset: 0; 
+            background: rgba(15, 23, 42, 0.6); 
+            backdrop-filter: blur(5px); 
+            z-index: 1000; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            opacity: 0; pointer-events: none; 
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        
+        .modal-content { 
+            background: white; 
+            width: 90%; max-width: 420px; 
+            border-radius: 20px; 
+            transform: scale(0.9) translateY(10px);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
+
+        /* Input Styles */
+        .input-field {
+            width: 100%; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 10px; 
+            padding: 12px 16px; 
+            font-size: 15px;
+            transition: all 0.2s;
+            background: #f8fafc;
+        }
+        .input-field:focus {
+            border-color: var(--primary);
+            background: white;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+
+        /* --- TOAST --- */
+        .toast { 
+            position: fixed; bottom: 24px; right: 24px; 
+            padding: 16px 24px; 
+            background: white; 
+            color: #1e293b; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); 
+            z-index: 2000; 
+            transform: translateY(100px) translateX(20px); 
+            opacity: 0; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            display: flex; 
+            align-items: center; 
+            gap: 12px;
+            font-weight: 500;
+            border-left: 4px solid #cbd5e1;
+        }
+        .toast.show { transform: translateY(0) translateX(0); opacity: 1; }
+        .toast.error { border-left-color: #dc2626; }
+        .toast.success { border-left-color: #22c55e; }
+
+        /* --- HERO BACKGROUND --- */
+        .hero-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-blob {
+            position: absolute;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+            filter: blur(60px);
+            animation: float 10s infinite ease-in-out;
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
     <!-- Navigation -->
-    <nav class="bg-white/90 backdrop-blur sticky top-0 z-50 border-b border-slate-100">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-red-600 flex items-center justify-center text-white shadow-sm">
-                    <i class="fas fa-heartbeat text-lg"></i>
+    <nav class="glass-panel sticky top-0 z-50 border-b border-slate-200/60">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="window.scrollTo(0,0)">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white shadow-lg shadow-red-500/30">
+                    <i class="fas fa-heartbeat text-lg animate-pulse"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg text-slate-800">Blood Connect</h1>
-                    <p class="text-xs text-slate-400 -mt-0.5">Nepal</p>
+                    <h1 class="font-bold text-lg text-slate-800 leading-tight">Blood Connect</h1>
+                    <p class="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">Nepal Network</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <span id="userBadge" class="hidden text-xs font-semibold px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 capitalize"></span>
-                <button id="navAuthBtn" onclick="App.handleAuthClick()" class="btn btn-primary text-sm py-2 px-5">
-                    <i class="fas fa-user"></i> Login
+                <div id="userBadge" class="hidden flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full border border-blue-100 text-xs font-bold animate-fade-in">
+                    <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                    <span class="capitalize"></span>
+                </div>
+                <button id="navAuthBtn" onclick="App.handleAuthClick()" class="btn btn-primary text-sm py-2.5 px-5 shadow-lg shadow-red-500/20">
+                    <i class="fas fa-user-shield"></i> Login
                 </button>
             </div>
         </div>
@@ -86,196 +295,300 @@
 
     <main class="flex-1">
         
-        <!-- ========================================== -->
-        <!-- NEW: HERO SECTION (Front Part) -->
-        <!-- ========================================== -->
-        <section class="hero-pattern text-white py-20 px-4">
-            <div class="max-w-4xl mx-auto text-center">
-                <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-white/20">
+        <!-- HERO SECTION -->
+        <section class="hero-bg text-white py-24 px-4 relative">
+            <!-- Decorative Blobs -->
+            <div class="hero-blob w-64 h-64 top-0 left-0 -translate-x-1/2 -translate-y-1/2"></div>
+            <div class="hero-blob w-96 h-96 bottom-0 right-0 translate-x-1/3 translate-y-1/3 animation-delay-2000"></div>
+            
+            <div class="max-w-5xl mx-auto relative z-10 text-center">
+                <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-8 border border-white/10 animate-fade-in-up" style="animation-delay: 0.1s;">
                     <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                    <span class="text-sm font-medium">Live Platform Active</span>
+                    <span class="text-sm font-medium tracking-wide">System Operational • Live Tracking</span>
                 </div>
-                <h1 class="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
-                    Donate Blood,<br>Save <span class="text-red-400">Lives</span>
+                
+                <h1 class="text-4xl md:text-7xl font-extrabold mb-6 leading-tight tracking-tight animate-fade-in-up" style="animation-delay: 0.2s;">
+                    Donate Blood,<br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-pink-300">Save Lives</span>
                 </h1>
-                <p class="text-lg md:text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
-                    Join Nepal's largest blood donation network. Connect with donors, hospitals, and blood banks in real-time.
+                
+                <p class="text-lg md:text-xl text-slate-200 mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in-up" style="animation-delay: 0.3s;">
+                    Join the largest real-time blood donation network in Nepal. We connect those in need directly with heroes like you.
                 </p>
-                <div class="flex flex-col sm:flex-row justify-center gap-4">
-                    <!-- THIS IS THE BUTTON THAT MAKES IT ACCESSIBLE -->
-                    <button onclick="document.getElementById('map-section').scrollIntoView({behavior: 'smooth'})" class="btn btn-primary text-lg px-8 py-4">
+                
+                <div class="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in-up" style="animation-delay: 0.4s;">
+                    <button onclick="document.getElementById('map-section').scrollIntoView({behavior: 'smooth'})" class="btn btn-primary text-lg px-8 py-4 bg-white text-red-600 hover:bg-slate-50 border-none shadow-xl shadow-white/10">
                         <i class="fas fa-search-location mr-2"></i> Find Blood Now
                     </button>
-                    <button onclick="App.handleAuthClick()" class="btn btn-outline text-lg px-8 py-4">
+                    <button onclick="App.handleAuthClick()" class="btn btn-outline text-lg px-8 py-4 hover:bg-white/10">
                         <i class="fas fa-hand-holding-heart mr-2"></i> Become a Donor
                     </button>
                 </div>
             </div>
         </section>
 
-        <!-- ========================================== -->
-        <!-- NEW: BLOOD FACTS SECTION -->
-        <!-- ========================================== -->
-        <section class="py-16 px-4 bg-white">
+        <!-- LIVE STATS SECTION (NEW) -->
+        <section class="py-8 px-4 bg-white border-b border-slate-100 relative z-20 -mt-6 mx-4 lg:mx-auto max-w-6xl rounded-2xl shadow-xl shadow-slate-200/50">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-slate-100">
+                <div class="text-center px-4">
+                    <div class="text-3xl font-extrabold text-slate-800 mb-1 counter" data-target="1240">0</div>
+                    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Donors Registered</div>
+                </div>
+                <div class="text-center px-4">
+                    <div class="text-3xl font-extrabold text-red-600 mb-1 counter" data-target="85">0</div>
+                    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Lives Saved (Month)</div>
+                </div>
+                <div class="text-center px-4">
+                    <div class="text-3xl font-extrabold text-slate-800 mb-1 counter" data-target="42">0</div>
+                    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Partner Hospitals</div>
+                </div>
+                <div class="text-center px-4">
+                    <div class="text-3xl font-extrabold text-slate-800 mb-1">24/7</div>
+                    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Support</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- INFO CARDS SECTION -->
+        <section class="py-16 px-4 bg-slate-50">
             <div class="max-w-6xl mx-auto">
                 <div class="text-center mb-12">
-                    <h2 class="text-3xl font-bold text-slate-800 mb-4">Understanding Blood Donation</h2>
-                    <p class="text-slate-500 max-w-2xl mx-auto">One donation can save up to three lives. Here is what you need to know.</p>
+                    <h2 class="text-3xl font-bold text-slate-800 mb-3">How It Works</h2>
+                    <p class="text-slate-500">Three simple steps to become a hero.</p>
                 </div>
 
-                <div class="grid md:grid-cols-3 gap-8 mb-12">
-                    <!-- Card 1 -->
-                    <div class="card p-6 hover:shadow-lg transition-shadow text-center">
-                        <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-tint text-3xl text-red-600"></i>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="card p-8 text-center group">
+                        <div class="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                            <i class="fas fa-user-plus text-3xl text-blue-600"></i>
                         </div>
-                        <h3 class="text-lg font-bold text-slate-800 mb-2">Blood Types</h3>
-                        <p class="text-sm text-slate-500 mb-4">There are 8 main blood types. O- is the universal donor, while AB+ is the universal recipient.</p>
-                        <div class="flex flex-wrap justify-center gap-2">
-                            <span class="px-3 py-1 bg-slate-100 rounded text-xs font-bold text-slate-700">A+</span>
-                            <span class="px-3 py-1 bg-slate-100 rounded text-xs font-bold text-slate-700">A-</span>
-                            <span class="px-3 py-1 bg-slate-100 rounded text-xs font-bold text-slate-700">B+</span>
-                            <span class="px-3 py-1 bg-slate-100 rounded text-xs font-bold text-slate-700">O+</span>
-                            <span class="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">O-</span>
-                            <span class="px-3 py-1 bg-slate-100 rounded text-xs font-bold text-slate-700">AB+</span>
-                        </div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">1. Register</h3>
+                        <p class="text-sm text-slate-500 leading-relaxed">Sign up securely with your email and verify your blood type and location.</p>
                     </div>
-                    <!-- Card 2 -->
-                    <div class="card p-6 hover:shadow-lg transition-shadow text-center">
-                        <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-user-check text-3xl text-blue-600"></i>
+                    <div class="card p-8 text-center group">
+                        <div class="w-20 h-20 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                            <i class="fas fa-bell text-3xl text-red-600"></i>
                         </div>
-                        <h3 class="text-lg font-bold text-slate-800 mb-2">Eligibility</h3>
-                        <p class="text-sm text-slate-500">Most people can donate. You just need to be healthy, over 18 years old, and weigh at least 50kg.</p>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">2. Get Notified</h3>
+                        <p class="text-sm text-slate-500 leading-relaxed">Receive instant alerts when your blood type is needed nearby.</p>
                     </div>
-                    <!-- Card 3 -->
-                    <div class="card p-6 hover:shadow-lg transition-shadow text-center">
-                        <div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-heart text-3xl text-green-600"></i>
+                    <div class="card p-8 text-center group">
+                        <div class="w-20 h-20 bg-green-50 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                            <i class="fas fa-hand-holding-medical text-3xl text-green-600"></i>
                         </div>
-                        <h3 class="text-lg font-bold text-slate-800 mb-2">Why Donate?</h3>
-                        <p class="text-sm text-slate-500">Blood cannot be manufactured. It can only come from generous donors like you. Every 2 seconds, someone needs blood.</p>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">3. Donate</h3>
+                        <p class="text-sm text-slate-500 leading-relaxed">Visit the hospital, donate, and save up to 3 lives in one session.</p>
                     </div>
-                </div>
-
-                <div class="text-center">
-                    <button onclick="document.getElementById('map-section').scrollIntoView({behavior: 'smooth'})" class="btn btn-outline border-slate-300 text-slate-600 hover:bg-slate-50">
-                        <i class="fas fa-arrow-down mr-2"></i> View Active Requests Below
-                    </button>
                 </div>
             </div>
         </section>
 
 
-        <!-- ========================================== -->
-        <!-- EXISTING: MAP & SOS SECTION -->
-        <!-- ========================================== -->
-        <section id="map-section" class="max-w-7xl w-full mx-auto px-4 py-6">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <!-- MAP & SOS SECTION -->
+        <section id="map-section" class="max-w-7xl w-full mx-auto px-4 py-10">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
                 <div>
-                    <h2 class="text-2xl font-bold text-slate-800">Active Blood Requests</h2>
-                    <p class="text-slate-500 text-sm mt-1">Real-time map of critical needs near you</p>
+                    <h2 class="text-2xl md:text-3xl font-bold text-slate-800">Live Blood Requests</h2>
+                    <p class="text-slate-500 text-sm mt-1 flex items-center gap-2">
+                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        Real-time updates across Nepal
+                    </p>
                 </div>
-                <div class="flex gap-2 items-center">
-                    <select id="filterType" onchange="UI.renderList()" class="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-red-100 outline-none">
-                        <option value="all">All Types</option>
+                <div class="flex flex-wrap gap-3 items-center bg-white p-2 rounded-xl shadow-sm border border-slate-100">
+                    <select id="filterType" onchange="UI.renderList()" class="text-sm border-none bg-transparent font-medium text-slate-600 focus:ring-0 cursor-pointer py-1">
+                        <option value="all">All Blood Types</option>
                         <option value="A+">A+</option><option value="A-">A-</option>
                         <option value="B+">B+</option><option value="B-">B-</option>
                         <option value="AB+">AB+</option><option value="AB-">AB-</option>
                         <option value="O+">O+</option><option value="O-">O-</option>
                     </select>
-                    <button onclick="Map.centerToUser()" class="btn btn-outline text-sm text-slate-600 border-slate-200">
-                        <i class="fas fa-location-crosshairs"></i> <span class="hidden sm:inline">Near Me</span>
+                    <div class="w-px h-4 bg-slate-200"></div>
+                    <button onclick="Map.centerToUser()" class="text-sm font-semibold text-slate-600 hover:text-red-600 flex items-center gap-2 transition-colors px-2">
+                        <i class="fas fa-location-crosshairs"></i> Near Me
                     </button>
                 </div>
             </div>
 
             <div class="grid lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 order-2 lg:order-1">
-                    <div class="card p-2 h-[50vh] md:h-[65vh] relative overflow-hidden">
+                <!-- MAP CONTAINER -->
+                <div class="lg:col-span-2 order-2 lg:order-1 relative group">
+                    <div class="card h-[60vh] md:h-[70vh] relative overflow-hidden border-slate-200">
                         <div id="map"></div>
-                        <div id="mapError" class="absolute inset-0 bg-white/90 flex flex-col items-center justify-center z-[1000] hidden">
-                            <i class="fas fa-wifi text-4xl text-slate-300 mb-4"></i>
-                            <p class="text-slate-500 mb-4">Connection lost</p>
-                            <button onclick="App.retry()" class="btn btn-primary text-sm">Retry</button>
+                        
+                        <!-- Overlay Controls -->
+                        <div class="absolute top-4 right-4 z-[500] flex flex-col gap-2">
+                            <button onclick="Map.centerToUser()" class="w-10 h-10 bg-white rounded-lg shadow-md flex items-center justify-center text-slate-600 hover:text-red-600 hover:shadow-lg transition-all" title="My Location">
+                                <i class="fas fa-crosshairs"></i>
+                            </button>
+                            <button onclick="App.pollData()" class="w-10 h-10 bg-white rounded-lg shadow-md flex items-center justify-center text-slate-600 hover:text-blue-600 hover:shadow-lg transition-all" title="Refresh">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+
+                        <!-- Error State -->
+                        <div id="mapError" class="absolute inset-0 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center z-[1000] hidden transition-opacity">
+                            <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-2xl mb-4">
+                                <i class="fas fa-wifi"></i>
+                            </div>
+                            <p class="text-slate-700 font-semibold mb-2">Connection Lost</p>
+                            <button onclick="App.retry()" class="btn btn-primary text-sm shadow-lg shadow-red-500/30">Try Again</button>
                         </div>
                     </div>
                 </div>
 
+                <!-- SOS LIST -->
                 <div class="lg:col-span-1 order-1 lg:order-2">
-                    <div class="card h-[50vh] md:h-[65vh] flex flex-col overflow-hidden">
-                        <div class="p-4 border-b border-slate-100 flex justify-between items-center">
-                            <span id="sosCount" class="text-sm font-semibold text-slate-500">0 Requests</span>
-                            <button onclick="App.pollData()" class="text-xs text-red-600 hover:text-red-700 font-medium flex items-center gap-1">
-                                <i class="fas fa-sync-alt"></i> Refresh
-                            </button>
+                    <div class="card h-[60vh] md:h-[70vh] flex flex-col overflow-hidden bg-white shadow-xl shadow-slate-200/40">
+                        <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                            <div>
+                                <span id="sosCount" class="text-xl font-bold text-slate-800">0</span>
+                                <span class="text-xs text-slate-400 ml-1">Active Requests</span>
+                            </div>
+                            <div class="flex gap-2 text-xs">
+                                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> Critical</span>
+                                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500"></span> Normal</span>
+                            </div>
                         </div>
-                        <div id="sosList" class="flex-1 overflow-y-auto divide-y divide-slate-100"></div>
+                        <div id="sosList" class="flex-1 overflow-y-auto relative">
+                            <!-- Skeleton Loader initially -->
+                            <div id="listLoader" class="p-4 space-y-4">
+                                <div class="skeleton h-20 w-full rounded-xl"></div>
+                                <div class="skeleton h-20 w-full rounded-xl"></div>
+                                <div class="skeleton h-20 w-full rounded-xl"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Login Modal -->
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-400 py-12 px-4 border-t border-slate-800">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-heartbeat text-red-500 text-xl"></i>
+                <span class="text-white font-bold text-lg">Blood Connect Nepal</span>
+            </div>
+            <div class="text-sm text-center md:text-right">
+                <p>&copy; 2023 Blood Connect Nepal. All rights reserved.</p>
+                <p class="text-xs mt-1 text-slate-600">Built for humanity. Not for profit.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- AUTH MODAL -->
     <div id="loginModal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="p-6">
-                <div class="text-center mb-6">
-                    <h3 class="text-xl font-bold text-slate-800">Welcome Back</h3>
-                    <p class="text-sm text-slate-500 mt-1">Sign in to help save lives</p>
-                </div>
-                
-                <div id="authStep1">
-                    <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Email Address</label>
-                    <input type="email" id="inputEmail" class="w-full border border-slate-200 rounded-lg p-3 mb-4 focus:ring-2 focus:ring-red-500 outline-none" placeholder="you@example.com">
-                    <button onclick="Auth.sendOTP()" id="btnOtp" class="btn btn-primary w-full">Continue with OTP</button>
-                </div>
-                
-                <div id="authStep2" class="hidden">
-                    <p class="text-sm text-center text-slate-600 mb-4">Enter the 6-digit code sent to <span id="emailDisplay" class="font-semibold"></span></p>
-                    <input type="text" id="inputOtp" maxlength="6" class="w-full border border-slate-200 rounded-lg p-3 text-center text-2xl tracking-[0.5em] mb-4" placeholder="000000">
-                    <button onclick="Auth.verify()" id="btnVerify" class="btn btn-primary w-full">Verify & Login</button>
-                    <p class="text-xs text-center text-slate-400 mt-4">For testing: use <span class="font-bold">123456</span></p>
-                </div>
-                
-                <div id="authStep3" class="hidden">
-                    <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Complete Registration</label>
-                    <input type="text" id="regName" placeholder="Full Name" class="w-full border border-slate-200 rounded-lg p-3 mb-3">
-                    <input type="tel" id="regPhone" placeholder="Phone Number" class="w-full border border-slate-200 rounded-lg p-3 mb-3">
-                    <select id="regRole" class="w-full border border-slate-200 rounded-lg p-3 mb-3 bg-white">
-                        <option value="donor">Register as Donor</option>
-                        <option value="hospital">Register as Hospital</option>
-                    </select>
-                    <select id="regBlood" class="w-full border border-slate-200 rounded-lg p-3 mb-3 bg-white">
-                        <option value="">Select Blood Type</option>
-                        <option value="A+">A+</option><option value="O+">O+</option><option value="B+">B+</option><option value="AB+">AB+</option>
-                        <option value="A-">A-</option><option value="O-">O-</option><option value="B-">B-</option><option value="AB-">AB-</option>
-                    </select>
-                    <input type="text" id="regLoc" placeholder="Location (e.g., Kathmandu)" class="w-full border border-slate-200 rounded-lg p-3 mb-4">
-                    <button onclick="Auth.register()" id="btnReg" class="btn btn-primary w-full">Create Account</button>
+        <div class="modal-content flex flex-col max-h-[90vh]">
+            <!-- Header -->
+            <div class="relative h-32 bg-gradient-to-r from-red-600 to-red-700 shrink-0">
+                <button onclick="UI.closeModal('loginModal')" class="absolute top-4 right-4 text-white/70 hover:text-white bg-black/10 hover:bg-black/20 w-8 h-8 rounded-full flex items-center justify-center transition-all">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="absolute -bottom-8 left-6">
+                    <div class="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center text-red-600 text-2xl">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
                 </div>
             </div>
-            <button onclick="UI.closeModal('loginModal')" class="absolute top-4 right-4 text-slate-300 hover:text-slate-600 text-xl">&times;</button>
+            
+            <!-- Body -->
+            <div class="pt-12 pb-6 px-8 overflow-y-auto">
+                <h3 class="text-xl font-bold text-slate-800">Welcome</h3>
+                <p class="text-slate-500 text-sm mb-6">Sign in to access the dashboard.</p>
+                
+                <!-- Step 1: Email -->
+                <div id="authStep1" class="auth-step transition-all duration-300">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
+                    <div class="relative mb-6">
+                        <i class="fas fa-envelope absolute left-4 top-3.5 text-slate-400"></i>
+                        <input type="email" id="inputEmail" class="input-field pl-10" placeholder="name@example.com">
+                    </div>
+                    <button onclick="Auth.sendOTP()" id="btnOtp" class="btn btn-primary w-full py-3 shadow-lg shadow-red-500/25">
+                        Get OTP Code
+                    </button>
+                </div>
+                
+                <!-- Step 2: OTP -->
+                <div id="authStep2" class="auth-step hidden transition-all duration-300">
+                    <p class="text-sm text-center text-slate-600 mb-6 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        Enter the 6-digit code sent to <br><span id="emailDisplay" class="font-bold text-slate-800"></span>
+                    </p>
+                    <div class="flex gap-2 justify-center mb-6">
+                        <input type="text" id="inputOtp" maxlength="6" class="input-field text-center text-2xl tracking-widest font-mono w-full" placeholder="••••••">
+                    </div>
+                    <button onclick="Auth.verify()" id="btnVerify" class="btn btn-primary w-full py-3 shadow-lg shadow-red-500/25">
+                        Verify Identity
+                    </button>
+                    <p class="text-xs text-center text-slate-400 mt-4">Demo Code: <span class="font-bold text-slate-600 bg-slate-100 px-1 rounded">123456</span></p>
+                </div>
+                
+                <!-- Step 3: Registration -->
+                <div id="authStep3" class="auth-step hidden transition-all duration-300">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Full Name</label>
+                            <input type="text" id="regName" class="input-field" placeholder="John Doe">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Phone</label>
+                                <input type="tel" id="regPhone" class="input-field" placeholder="+977...">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Role</label>
+                                <select id="regRole" class="input-field">
+                                    <option value="donor">Donor</option>
+                                    <option value="hospital">Hospital</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Blood Type</label>
+                                <select id="regBlood" class="input-field">
+                                    <option value="">Select</option>
+                                    <option value="A+">A+</option><option value="O+">O+</option><option value="B+">B+</option><option value="AB+">AB+</option>
+                                    <option value="A-">A-</option><option value="O-">O-</option><option value="B-">B-</option><option value="AB-">AB-</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">City</label>
+                                <input type="text" id="regLoc" class="input-field" placeholder="Kathmandu">
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="Auth.register()" id="btnReg" class="btn btn-primary w-full py-3 shadow-lg shadow-red-500/25 mt-6">
+                        Create Account
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Dashboard Modal -->
+    <!-- DASHBOARD MODAL -->
     <div id="dashModal" class="modal-overlay">
         <div class="modal-content max-w-md">
-            <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+            <div class="bg-slate-50 p-6 border-b border-slate-100 flex justify-between items-center">
                 <div>
-                    <h3 class="font-bold text-slate-800" id="dashTitle">Dashboard</h3>
-                    <p class="text-xs text-slate-500" id="dashSubtitle"></p>
+                    <h3 class="font-bold text-lg text-slate-800" id="dashTitle">Dashboard</h3>
+                    <p class="text-xs text-slate-500 mt-0.5" id="dashSubtitle"></p>
                 </div>
-                <button onclick="UI.closeModal('dashModal')" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+                <button onclick="UI.closeModal('dashModal')" class="w-8 h-8 rounded-full hover:bg-slate-200 flex items-center justify-center transition-colors text-slate-400 hover:text-slate-600">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div id="dashContent" class="p-6"></div>
         </div>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="toast" role="alert" aria-live="assertive"><i id="toastIcon" class="fas fa-check-circle"></i> <span id="toastMsg">Action completed</span></div>
+    <div id="toast" class="toast" role="alert">
+        <i id="toastIcon" class="fas fa-info-circle text-lg"></i> 
+        <div class="flex flex-col">
+            <span id="toastMsg" class="font-medium">Notification</span>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -333,7 +646,7 @@
 
             calculateDistance: (lat1, lon1, lat2, lon2) => {
                 if (!lat1 || !lat2) return null;
-                const R = 6371; // km
+                const R = 6371; 
                 const dLat = (lat2 - lat1) * Math.PI / 180;
                 const dLon = (lon2 - lon1) * Math.PI / 180;
                 const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
@@ -377,7 +690,7 @@
                     } catch (e) {
                         log(`Attempt ${i+1} failed: ${e.message}`);
                         if (i === CONFIG.RETRY_COUNT - 1) {
-                            UI.showToast(e.message, 'error');
+                            // UI.showToast(e.message, 'error'); // Let Polling handle error state silently mostly
                             return { success: false, error: e.message };
                         }
                         await new Promise(r => setTimeout(r, 1000 * (i+1))); 
@@ -391,14 +704,25 @@
         // ==========================================
         const Map = {
             init() {
-                this.map = L.map('map').setView([27.7172, 85.3240], 12);
+                // Center on Nepal
+                this.map = L.map('map', { zoomControl: false }).setView([27.7172, 85.3240], 12);
+                L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+                
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; OpenStreetMap'
+                    attribution: '&copy; OpenStreetMap',
+                    maxZoom: 19
                 }).addTo(this.map);
                 
                 this.markers = L.markerClusterGroup({
+                    showCoverageOnHover: false,
+                    zoomToBoundsOnClick: true,
+                    spiderfyOnMaxZoom: true,
                     iconCreateFunction: function(cluster) {
-                        return L.divIcon({ html: `<div class="bg-red-600 text-white rounded-full h-8 w-8 flex items-center justify-center text-xs font-bold border-2 border-white shadow">${cluster.getChildCount()}</div>`, className: '' });
+                        return L.divIcon({ 
+                            html: `<div class="bg-slate-800 text-white rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold border-2 border-white shadow-xl transform hover:scale-110 transition-transform">${cluster.getChildCount()}</div>`, 
+                            className: '',
+                            iconSize: [40, 40]
+                        });
                     }
                 });
                 this.map.addLayer(this.markers);
@@ -406,14 +730,24 @@
             
             renderMarkers() {
                 this.markers.clearLayers();
-                State.sos.forEach(s => {
+                State.sos.forEach((s, index) => {
                     if(s.lat && s.lng) {
-                        const colorClass = s.urgency === 'critical' ? 'bg-red-600' : s.urgency === 'high' ? 'bg-orange-500' : 'bg-green-500';
+                        const colorClass = s.urgency === 'critical' ? 'text-red-600' : s.urgency === 'high' ? 'text-orange-500' : 'text-green-600';
+                        const pulse = s.urgency === 'critical' ? '<div class="marker-pulse"></div>' : '';
+                        
                         const icon = L.divIcon({
-                            className: 'custom-marker',
-                            html: `<div class="marker-pin ${colorClass}">${s.bloodType.replace('+','')}</div>`,
-                            iconSize: [30, 30],
-                            iconAnchor: [15, 30]
+                            className: 'custom-div-icon',
+                            html: `
+                                <div class="relative">
+                                    ${pulse}
+                                    <div class="custom-marker-pin ${colorClass} bg-white">
+                                        <i class="fas fa-tint"></i>
+                                    </div>
+                                </div>
+                            `,
+                            iconSize: [36, 36],
+                            iconAnchor: [18, 36],
+                            popupAnchor: [0, -35]
                         });
                         
                         const marker = L.marker([s.lat, s.lng], { icon });
@@ -421,19 +755,24 @@
                         let distText = "";
                         if (State.userLocation) {
                             const d = Utils.calculateDistance(State.userLocation.lat, State.userLocation.lng, s.lat, s.lng);
-                            if (d) distText = `<span class="text-xs text-slate-500 ml-2">${d} km away</span>`;
+                            if (d) distText = `<span class="inline-flex items-center gap-1 text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded mt-2"><i class="fas fa-location-arrow"></i> ${d} km</span>`;
                         }
                         
+                        const urgencyColor = s.urgency === 'critical' ? 'red' : s.urgency === 'high' ? 'orange' : 'green';
+                        
                         marker.bindPopup(`
-                            <div class="p-2">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="bg-red-100 text-red-700 font-bold px-2 py-1 rounded text-xs">${Utils.escapeHtml(s.bloodType)}</span>
-                                    ${distText}
+                            <div class="min-w-[200px] font-sans">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="bg-${urgencyColor}-100 text-${urgencyColor}-700 font-bold px-2 py-0.5 rounded text-xs border border-${urgencyColor}-200 uppercase tracking-wide">${s.bloodType}</span>
+                                    <span class="text-[10px] text-slate-400 uppercase">${s.urgency}</span>
                                 </div>
-                                <h4 class="font-bold text-sm">${Utils.escapeHtml(s.hospital)}</h4>
-                                <p class="text-xs text-gray-500">${Utils.escapeHtml(s.location)}</p>
+                                <h4 class="font-bold text-slate-800 text-sm mb-0.5">${Utils.escapeHtml(s.hospital)}</h4>
+                                <p class="text-xs text-slate-500 mb-2">${Utils.escapeHtml(s.location)}</p>
+                                ${distText}
+                                ${State.user ? `<button onclick="App.respond('${s.id}')" class="w-full mt-2 bg-slate-800 text-white text-xs py-2 rounded hover:bg-slate-700 transition-colors">I Can Donate</button>` : ''}
                             </div>
-                        `);
+                        `, { maxWidth: 250 });
+                        
                         this.markers.addLayer(marker);
                     }
                 });
@@ -441,13 +780,22 @@
             
             centerToUser() {
                 if (!navigator.geolocation) return UI.showToast("GPS not supported", "error");
-                UI.showToast("Getting your location...", "info");
+                UI.showToast("Locating you...", "info");
+                
+                const btn = document.querySelector('button[title="My Location"] i');
+                if(btn) btn.classList.add('fa-spin');
+                
                 navigator.geolocation.getCurrentPosition(
                     pos => {
                         State.update({ userLocation: { lat: pos.coords.latitude, lng: pos.coords.longitude }});
-                        this.map.flyTo([pos.coords.latitude, pos.coords.longitude], 14);
+                        this.map.flyTo([pos.coords.latitude, pos.coords.longitude], 14, { duration: 1.5 });
+                        if(btn) btn.classList.remove('fa-spin');
+                        UI.showToast("Location Found", "success");
                     },
-                    err => UI.showToast("Could not get location", "error")
+                    err => {
+                        if(btn) btn.classList.remove('fa-spin');
+                        UI.showToast("Location access denied", "error");
+                    }
                 );
             }
         };
@@ -468,6 +816,7 @@
                     }
                 }
                 this.render();
+                this.animateCounters();
             },
 
             render() {
@@ -483,10 +832,10 @@
                 if (State.user) {
                     btn.innerHTML = '<i class="fas fa-th-large"></i> Dashboard';
                     btn.onclick = () => this.openDashboard();
-                    badge.textContent = State.user.role;
+                    badge.querySelector('span:not(.bg-blue-500)').textContent = State.user.role;
                     badge.classList.remove('hidden');
                 } else {
-                    btn.innerHTML = '<i class="fas fa-user"></i> Login';
+                    btn.innerHTML = '<i class="fas fa-user-shield"></i> Login';
                     btn.onclick = () => this.openModal('loginModal');
                     badge.classList.add('hidden');
                 }
@@ -496,52 +845,90 @@
                 const container = document.getElementById('sosList');
                 const countEl = document.getElementById('sosCount');
                 const filterVal = document.getElementById('filterType').value;
+                const loader = document.getElementById('listLoader');
                 
+                // Hide loader if data exists
+                if (State.sos.length > 0 || State.error) loader.style.display = 'none';
+                else loader.style.display = 'block';
+
                 let filtered = State.sos;
                 if (filterVal !== 'all') filtered = filtered.filter(s => s.bloodType === filterVal);
                 
-                countEl.textContent = `${filtered.length} Requests`;
+                countEl.textContent = filtered.length;
                 
                 if (State.error) {
                     container.innerHTML = `
-                        <div class="p-8 text-center">
-                            <div class="text-red-500 mb-4"><i class="fas fa-exclamation-triangle text-3xl"></i></div>
-                            <p class="text-red-700 font-medium mb-2">Failed to load data</p>
-                            <button onclick="App.retry()" class="text-red-600 underline text-sm">Retry Now</button>
+                        <div class="p-8 text-center flex flex-col items-center justify-center h-full animate-fade-in">
+                            <div class="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-3 text-xl">
+                                <i class="fas fa-wifi"></i>
+                            </div>
+                            <p class="text-slate-600 font-medium text-sm">Network Error</p>
                         </div>`;
                     document.getElementById('mapError').classList.remove('hidden');
                     return;
                 }
                 
                 if (filtered.length === 0) {
-                    container.innerHTML = `<div class="p-8 text-center text-slate-400 text-sm">No active requests found.</div>`;
+                    container.innerHTML = `<div class="p-8 text-center text-slate-400 text-sm animate-fade-in">No active requests matching filter.</div>`;
                     return;
                 }
 
-                container.innerHTML = filtered.map(s => {
+                container.innerHTML = filtered.map((s, i) => {
                     let distHtml = '';
                     if (State.userLocation) {
                         const d = Utils.calculateDistance(State.userLocation.lat, State.userLocation.lng, s.lat, s.lng);
-                        if (d) distHtml = `<div class="text-xs text-slate-400 mt-1 flex items-center gap-1"><i class="fas fa-map-marker-alt"></i> ${d} km away</div>`;
+                        if (d) distHtml = `<span class="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full"><i class="fas fa-map-marker-alt mr-1"></i> ${d} km</span>`;
                     }
                     
+                    const urgencyClass = s.urgency;
+                    const urgencyLabel = s.urgency.charAt(0).toUpperCase() + s.urgency.slice(1);
+                    
                     return `
-                    <div class="sos-item ${s.urgency}" onclick="Map.map.flyTo([${s.lat}, ${s.lng}], 15)">
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="font-bold text-slate-800">${Utils.escapeHtml(s.hospital)}</span>
-                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${s.urgency === 'critical' ? 'bg-red-100 text-red-600' : s.urgency === 'high' ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}">${s.urgency}</span>
+                    <div class="sos-item ${urgencyClass} group animate-slide-in-right" style="animation-delay: ${i * 50}ms" onclick="Map.map.flyTo([${s.lat}, ${s.lng}], 16, { duration: 1.5 })">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm group-hover:text-red-600 transition-colors">${Utils.escapeHtml(s.hospital)}</h4>
+                                <p class="text-xs text-slate-500 truncate max-w-[150px]">${Utils.escapeHtml(s.location)}</p>
+                            </div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border ${urgencyClass === 'critical' ? 'bg-red-50 text-red-600 border-red-100' : urgencyClass === 'high' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-green-50 text-green-600 border-green-100'}">${urgencyLabel}</span>
                         </div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="bg-slate-100 text-slate-700 text-xs font-mono font-bold px-2 py-1 rounded">${Utils.escapeHtml(s.bloodType)}</span>
-                            <span class="text-xs text-slate-500">Needs ${s.units} units</span>
+                        
+                        <div class="flex items-center justify-between mt-3">
+                            <div class="flex items-center gap-2">
+                                <span class="bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded shadow-md shadow-slate-300/50">${Utils.escapeHtml(s.bloodType)}</span>
+                                <span class="text-xs text-slate-500 font-medium">${s.units} Unit${s.units > 1 ? 's' : ''}</span>
+                            </div>
+                            
+                            ${distHtml}
                         </div>
-                        ${distHtml}
-                        <div class="flex justify-between items-center mt-2 text-xs text-slate-400">
-                            <span><i class="far fa-clock mr-1"></i>${Utils.timeAgo(s.time)}</span>
-                            ${State.user ? `<button onclick="App.respond('${s.id}'); event.stopPropagation();" class="text-red-600 font-semibold hover:underline">Respond</button>` : ''}
+
+                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-50">
+                            <span class="text-[10px] text-slate-400 font-medium"><i class="far fa-clock mr-1"></i>${Utils.timeAgo(s.time)}</span>
+                            ${State.user ? `<button onclick="App.respond('${s.id}'); event.stopPropagation();" class="text-xs font-bold text-red-600 hover:bg-red-50 px-3 py-1 rounded-full transition-colors">Respond <i class="fas fa-arrow-right ml-1"></i></button>` : ''}
                         </div>
                     </div>`;
                 }).join('');
+            },
+
+            animateCounters() {
+                const counters = document.querySelectorAll('.counter');
+                counters.forEach(counter => {
+                    const target = +counter.getAttribute('data-target');
+                    const duration = 2000; 
+                    const increment = target / (duration / 16); 
+                    
+                    let current = 0;
+                    const updateCount = () => {
+                        current += increment;
+                        if (current < target) {
+                            counter.innerText = Math.ceil(current);
+                            requestAnimationFrame(updateCount);
+                        } else {
+                            counter.innerText = target;
+                        }
+                    };
+                    updateCount();
+                });
             },
 
             openModal(id) {
@@ -549,45 +936,89 @@
                 if (id === 'loginModal') Auth.reset();
             },
             
-            closeModal(id) { document.getElementById(id).classList.remove('active'); },
+            closeModal(id) { 
+                document.getElementById(id).classList.remove('active'); 
+                // Reset modal scale after transition
+                setTimeout(() => {
+                    const content = document.querySelector(`#${id} .modal-content`);
+                    if(content) content.style.transform = '';
+                }, 300);
+            },
 
             openDashboard() {
                 const content = document.getElementById('dashContent');
                 const title = document.getElementById('dashTitle');
                 const subtitle = document.getElementById('dashSubtitle');
                 
-                title.textContent = State.user.role === 'hospital' ? 'Hospital Admin' : 'Donor Dashboard';
+                title.textContent = State.user.role === 'hospital' ? 'Hospital Dashboard' : 'Donor Profile';
                 subtitle.textContent = State.user.email;
                 
                 if (State.user.role === 'hospital') {
                     content.innerHTML = `
-                        <div class="space-y-4">
-                            <p class="text-sm text-slate-600">Create a new blood request. It will appear on the map immediately.</p>
-                            <div class="grid grid-cols-2 gap-3">
-                                <select id="newType" class="border p-2 rounded-lg bg-white text-sm">
-                                    <option value="A+">A+</option><option value="O+">O+</option><option value="B+">B+</option><option value="AB+">AB+</option>
-                                    <option value="A-">A-</option><option value="O-">O-</option><option value="B-">B-</option><option value="AB-">AB-</option>
-                                </select>
-                                <input type="number" id="newUnits" value="2" class="border p-2 rounded-lg text-sm" placeholder="Units">
+                        <div class="space-y-5 animate-fade-in">
+                            <div class="bg-red-50 border border-red-100 p-4 rounded-xl flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600"><i class="fas fa-plus"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-red-900 text-sm">Post New Request</h4>
+                                    <p class="text-xs text-red-700">Immediate broadcast to donors</p>
+                                </div>
                             </div>
-                            <select id="newUrgency" class="w-full border p-2 rounded-lg bg-white text-sm">
-                                <option value="critical">Critical (Immediate)</option>
-                                <option value="high">High (Within 24h)</option>
-                                <option value="normal">Normal (Scheduled)</option>
-                            </select>
-                            <button onclick="App.createRequest()" class="btn btn-primary w-full bg-blue-600 hover:bg-blue-700">Post Request</button>
-                            <hr class="my-4">
-                            <button onclick="App.logout()" class="block w-full text-center text-red-600 text-sm font-medium hover:underline">Logout</button>
+                            
+                            <div class="space-y-3">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-500 uppercase">Blood Type</label>
+                                        <select id="newType" class="input-field mt-1">
+                                            <option value="A+">A+</option><option value="O+">O+</option><option value="B+">B+</option><option value="AB+">AB+</option>
+                                            <option value="A-">A-</option><option value="O-">O-</option><option value="B-">B-</option><option value="AB-">AB-</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-500 uppercase">Units</label>
+                                        <input type="number" id="newUnits" value="2" class="input-field mt-1">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase">Urgency Level</label>
+                                    <select id="newUrgency" class="input-field mt-1">
+                                        <option value="critical">Critical (Immediate)</option>
+                                        <option value="high">High (24 Hours)</option>
+                                        <option value="normal">Normal (Scheduled)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <button onclick="App.createRequest()" class="btn btn-primary w-full shadow-lg shadow-red-500/25 py-3 mt-2">Publish Request</button>
+                            
+                            <div class="border-t border-slate-100 pt-4 mt-6">
+                                <button onclick="App.logout()" class="w-full text-slate-400 hover:text-red-500 text-sm font-medium transition-colors">Sign Out</button>
+                            </div>
                         </div>`;
                 } else {
                     content.innerHTML = `
-                        <div class="text-center space-y-4">
-                            <div class="bg-red-50 p-6 rounded-xl">
-                                <i class="fas fa-user-check text-4xl text-red-600 mb-3"></i>
-                                <h4 class="font-bold text-slate-800">Thank you for registering!</h4>
-                                <p class="text-sm text-slate-500 mt-1">You will be notified when someone needs ${State.user.bloodType} blood near you.</p>
+                        <div class="text-center animate-fade-in">
+                            <div class="w-24 h-24 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl border-4 border-green-100">
+                                <i class="fas fa-check"></i>
                             </div>
-                            <button onclick="App.logout()" class="block w-full text-center text-red-600 text-sm font-medium hover:underline">Logout</button>
+                            <h4 class="text-xl font-bold text-slate-800 mb-2">You are a Hero!</h4>
+                            <p class="text-slate-500 text-sm mb-6 px-4">Your profile is active. We will notify you immediately when someone needs <span class="font-bold text-slate-800 bg-slate-100 px-1 rounded">${State.user.bloodType}</span> blood in ${State.user.location}.</p>
+                            
+                            <div class="bg-slate-50 p-4 rounded-xl mb-6 text-left">
+                                <div class="flex justify-between py-2 border-b border-slate-100">
+                                    <span class="text-xs text-slate-500 font-bold uppercase">Blood Type</span>
+                                    <span class="text-sm font-bold text-slate-800">${State.user.bloodType}</span>
+                                </div>
+                                <div class="flex justify-between py-2 border-b border-slate-100">
+                                    <span class="text-xs text-slate-500 font-bold uppercase">Location</span>
+                                    <span class="text-sm font-bold text-slate-800">${State.user.location}</span>
+                                </div>
+                                <div class="flex justify-between py-2">
+                                    <span class="text-xs text-slate-500 font-bold uppercase">Status</span>
+                                    <span class="text-sm font-bold text-green-600 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Active</span>
+                                </div>
+                            </div>
+
+                            <button onclick="App.logout()" class="text-slate-400 hover:text-red-500 text-sm font-medium transition-colors">Sign Out</button>
                         </div>`;
                 }
                 
@@ -601,18 +1032,28 @@
                 
                 m.textContent = msg;
                 t.className = `toast show ${type}`;
-                i.className = type === 'success' ? 'fas fa-check-circle' : type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-info-circle';
                 
-                setTimeout(() => t.classList.remove('show'), 4000);
+                if (type === 'success') {
+                    i.className = 'fas fa-check-circle text-green-500 text-lg';
+                } else if (type === 'error') {
+                    i.className = 'fas fa-exclamation-circle text-red-500 text-lg';
+                } else {
+                    i.className = 'fas fa-info-circle text-blue-500 text-lg';
+                }
+                
+                // Reset animation
+                clearTimeout(this.toastTimer);
+                this.toastTimer = setTimeout(() => t.classList.remove('show'), 4000);
             },
             
             showSkeletons() {
-                 document.getElementById('sosList').innerHTML = Array(5).fill().map(() => `
-                    <div class="p-4 border-b border-slate-100">
-                        <div class="skeleton h-4 w-3/4 mb-2"></div>
-                        <div class="skeleton h-3 w-1/2"></div>
-                    </div>
-                 `).join('');
+                 // Handled by HTML static skeleton with ID listLoader
+                 document.getElementById('sosList').innerHTML = `
+                    <div id="listLoader" class="p-4 space-y-4">
+                        <div class="skeleton h-20 w-full rounded-xl"></div>
+                        <div class="skeleton h-20 w-full rounded-xl"></div>
+                        <div class="skeleton h-20 w-full rounded-xl"></div>
+                    </div>`;
             }
         };
 
@@ -621,25 +1062,62 @@
         // ==========================================
         const Auth = {
             reset() {
-                document.getElementById('authStep1').classList.remove('hidden');
-                document.getElementById('authStep2').classList.add('hidden');
-                document.getElementById('authStep3').classList.add('hidden');
+                document.querySelectorAll('.auth-step').forEach(el => {
+                    el.classList.add('hidden');
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateX(20px)';
+                });
+                
+                const step1 = document.getElementById('authStep1');
+                step1.classList.remove('hidden');
+                // Small delay to allow display:block to apply before opacity transition
+                requestAnimationFrame(() => {
+                    step1.style.opacity = '1';
+                    step1.style.transform = 'translateX(0)';
+                });
+
                 document.getElementById('inputEmail').value = '';
                 document.getElementById('inputOtp').value = '';
             },
 
+            transitionTo(nextId) {
+                const current = document.querySelector('.auth-step:not(.hidden)');
+                const next = document.getElementById(nextId);
+                
+                if(current) {
+                    current.style.opacity = '0';
+                    current.style.transform = 'translateX(-20px)';
+                    setTimeout(() => current.classList.add('hidden'), 300);
+                }
+                
+                next.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    next.style.opacity = '1';
+                    next.style.transform = 'translateX(0)';
+                });
+            },
+
             async sendOTP() {
                 const email = document.getElementById('inputEmail').value;
-                if (!email) return UI.showToast("Enter email", 'error');
+                if (!email) return UI.showToast("Please enter your email", 'error');
+                
+                // Show loading state
+                const btn = document.getElementById('btnOtp');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Sending...';
+                btn.disabled = true;
                 
                 UI.showSkeletons();
                 
                 const res = await API.post('sendOTP', { email });
+                
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                
                 if (res.success) {
-                    document.getElementById('authStep1').classList.add('hidden');
-                    document.getElementById('authStep2').classList.remove('hidden');
+                    this.transitionTo('authStep2');
                     document.getElementById('emailDisplay').textContent = email;
-                    UI.showToast("OTP sent!", 'success');
+                    UI.showToast("Verification code sent!", 'success');
                 }
             },
 
@@ -656,8 +1134,7 @@
                         UI.openDashboard();
                         UI.showToast("Welcome back!", 'success');
                     } else {
-                        document.getElementById('authStep2').classList.add('hidden');
-                        document.getElementById('authStep3').classList.remove('hidden');
+                        this.transitionTo('authStep3');
                     }
                 }
             },
@@ -672,14 +1149,19 @@
                     location: document.getElementById('regLoc').value
                 };
                 
-                if (!payload.name || !payload.bloodType) return UI.showToast("Fill all fields", 'error');
+                if (!payload.name || !payload.bloodType) return UI.showToast("Please complete all fields", 'error');
+                
+                const btn = document.getElementById('btnReg');
+                btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Creating...';
                 
                 const res = await API.post('register', payload);
                 if (res.success) {
                     this.saveSession(res.user);
                     UI.closeModal('loginModal');
                     UI.openDashboard();
-                    UI.showToast("Account Created!", 'success');
+                    UI.showToast("Account created successfully!", 'success');
+                } else {
+                    btn.innerHTML = 'Create Account';
                 }
             },
             
@@ -715,7 +1197,11 @@
                     document.getElementById('mapError').classList.add('hidden');
                     
                     if (Notification.permission === 'granted' && res.requests.length > State.sos.length) {
-                        new Notification("New Blood Request", { body: `Critical need for ${res.requests[0].bloodType} at ${res.requests[0].hospital}`});
+                        // Simple check for new items
+                        new Notification("New Blood Request", { 
+                            body: `Urgent need for ${res.requests[0].bloodType} at ${res.requests[0].hospital}`,
+                            icon: 'https://cdn-icons-png.flaticon.com/512/3025/3025341.png'
+                        });
                     }
                 } else {
                     State.update({ error: "Failed to fetch" });
@@ -733,7 +1219,7 @@
                 
                 const res = await API.post('createSOS', data);
                 if (res.success) {
-                    UI.showToast("Request Posted!", 'success');
+                    UI.showToast("Request Posted Successfully!", 'success');
                     UI.closeModal('dashModal');
                     this.pollData();
                 }
@@ -741,7 +1227,7 @@
 
             async respond(id) {
                 const res = await API.post('respondSOS', { sosId: id });
-                if (res.success) UI.showToast("Response Recorded!", 'success');
+                if (res.success) UI.showToast("Response Recorded. Thank you!", 'success');
             },
 
             retry() {
@@ -757,7 +1243,8 @@
             logout() {
                 localStorage.removeItem('blood_connect_session');
                 State.update({ user: null });
-                location.reload();
+                UI.closeModal('dashModal');
+                UI.showToast("Logged out successfully", 'info');
             }
         };
 
