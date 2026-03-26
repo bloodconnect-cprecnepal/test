@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Dashboard | Blood Connect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        :root { --primary: #ef4444; --bg: #f8fafc; --text: #0f172a; --border: #e2e8f0; }
+        body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); }
+        .card { background: white; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .stat-box { background: white; padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); text-align: center; }
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0.75rem 1.5rem; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-outline { border: 1px solid var(--border); background: white; color: var(--text); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center text-white"><i class="fas fa-heartbeat"></i></div>
+                <h1 class="font-bold text-lg text-slate-800">Donor Profile</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="App.logout()" class="text-sm text-slate-500 hover:text-red-600 font-semibold">Sign Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+        
+        <!-- Welcome Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-slate-900 mb-2">Welcome, <span id="userName" class="text-red-600"></span>!</h2>
+            <p class="text-slate-500">Thank you for being a hero. Your profile is active and ready to help.</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="stat-box">
+                <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">My Blood Type</div>
+                <div id="userBlood" class="text-3xl font-extrabold text-red-600">A+</div>
+            </div>
+            <div class="stat-box">
+                <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Location</div>
+                <div id="userLoc" class="text-xl font-bold text-slate-800">Kathmandu</div>
+            </div>
+            <div class="stat-box">
+                <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Status</div>
+                <div class="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full font-bold text-sm mt-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span> Active Donor
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="card p-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold">Blood Requests Near You</h3>
+                <span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">Filtered by your type</span>
+            </div>
+            
+            <div id="requestsList" class="space-y-4">
+                <!-- Content loads via JS -->
+            </div>
+            
+            <div class="mt-8 pt-8 border-t border-slate-100 text-center">
+                <p class="text-slate-500 text-sm mb-4">Want to see the full map?</p>
+                <button onclick="window.location.href='index.html'" class="btn btn-outline">
+                    <i class="fas fa-map"></i> Go to Live Map
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // CONFIG - SAME AS MAIN FILE
+        const CONFIG = {
+            SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyFrRsw-Ru2PeQcfYgTZ0PdPMhwWE7ID-0cvxdl74blLNTwUn4Gd8bhwZmM1PwdGX1J/exec',
+            DEBUG: true
+        };
+
+        const State = { user: null, requests: [] };
+
+        const API = {
+            async post(action, data = {}) {
+                if (!State.user) return { success: false };
+                const payload = { action, ...data, userId: State.user.id, token: State.user.token };
+                try {
+                    const res = await fetch(CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                    return await res.json();
+                } catch (e) { return { success: false }; }
+            }
+        };
+
+        const App = {
+            init() {
+                const saved = localStorage.getItem('bc_session');
+                if (!saved) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                State.user = JSON.parse(saved);
+                
+                // Populate Profile
+                document.getElementById('userName').textContent = State.user.name;
+                document.getElementById('userBlood').textContent = State.user.bloodType;
+                document.getElementById('userLoc').textContent = State.user.location;
+
+                this.loadRequests();
+            },
+
+            async loadRequests() {
+                const list = document.getElementById('requestsList');
+                list.innerHTML = '<div class="text-center py-4">Scanning network...</div>';
+
+                const res = await API.post('getSOS');
+                if (res.success) {
+                    // Filter: Only show requests matching donor's blood type
+                    State.requests = res.requests.filter(r => r.bloodType === State.user.bloodType && r.status !== 'Fulfilled');
+                    this.renderList();
+                }
+            },
+
+            renderList() {
+                const list = document.getElementById('requestsList');
+                if (State.requests.length === 0) {
+                    list.innerHTML = `<div class="text-center text-slate-400 py-8">No active requests for your blood type right now. You're all clear!</div>`;
+                    return;
+                }
+
+                list.innerHTML = State.requests.map(r => `
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 hover:bg-white hover:shadow-md transition-all cursor-pointer">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-lg font-bold">
+                                ${r.bloodType}
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800">${r.hospital}</h4>
+                                <p class="text-xs text-slate-500">${r.location} • ${r.units} Units</p>
+                            </div>
+                        </div>
+                        <button onclick="App.respond('${r.id}')" class="btn btn-primary text-xs py-2 px-4 shadow-md shadow-red-500/20">
+                            Help Now
+                        </button>
+                    </div>
+                `).join('');
+            },
+
+            async respond(id) {
+                const res = await API.post('respondSOS', { sosId: id });
+                if (res.success) alert("Response sent! The hospital will contact you.");
+            },
+
+            logout() {
+                localStorage.removeItem('bc_session');
+                window.location.href = 'index.html';
+            }
+        };
+
+        window.onload = () => App.init();
+    </script>
+</body>
+</html>
