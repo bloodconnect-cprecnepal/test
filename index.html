@@ -1,1004 +1,800 @@
 <!DOCTYPE html>
-<a href="donor-dashboard.html">Donor Dashboard</a>
-<a href="hospital-dashboard.html">Hospital Dashboard</a>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#ffffff">
-    <title>Blood Connect Nepal | Premium Network</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Connect | Premium Network</title>
     
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Tailwind CSS (CDN for layout utility) -->
+    <!-- Leaflet Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        /* --- 1. DESIGN TOKENS & RESET --- */
-        :root { 
-            --primary: #ef4444; /* Red-500 */
+        /* --- DESIGN TOKENS --- */
+        :root {
+            --primary: #ef4444;
             --primary-dark: #dc2626;
-            --primary-grad: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-            
-            --secondary: #4f46e5; /* Indigo-600 */
-            --secondary-grad: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
-            
-            --accent-hospital: #3b82f6; /* Blue */
-            --accent-bank: #8b5cf6; /* Violet */
-            --accent-donor: #f43f5e; /* Rose */
-
+            --secondary: #3b82f6;
             --bg-body: #f8fafc;
-            --bg-card: #ffffff;
             --text-main: #0f172a;
-            --text-muted: #64748b;
             --border: #e2e8f0;
-            
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        body { 
-            font-family: 'Outfit', sans-serif; 
-            background-color: var(--bg-body); 
-            color: var(--text-main); 
-            line-height: 1.6;
-            overflow-x: hidden;
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* --- 2. ANIMATIONS --- */
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideInRight { from { opacity: 0; transform: translateX(15px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 0.5; } 100% { transform: scale(2.5); opacity: 0; } }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        /* --- CUSTOM UI COMPONENTS --- */
 
-        .animate-fade-in { animation: fadeIn 0.6s ease-out; }
-        .animate-fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-        .animate-slide-in { animation: slideInRight 0.4s ease-out; }
-
-        /* --- 3. COMPONENT STYLES --- */
-
-        /* Glass Effect */
-        .glass {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255,255,255,0.5);
+        /* 1. Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #22c55e;
         }
-
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 0.75rem 1.5rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            border: none;
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #22c55e;
+        }
+        .toggle-checkbox:checked + .toggle-label:before {
+            transform: translateX(100%);
+        }
+        .toggle-label {
+            width: 50px;
+            height: 28px;
+            background-color: #cbd5e1;
+            border-radius: 9999px;
             position: relative;
-            overflow: hidden;
-            font-family: inherit;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
         }
-        
-        .btn::after {
+        .toggle-label:before {
             content: '';
             position: absolute;
-            top: 50%; left: 50%;
-            width: 0; height: 0;
-            background: rgba(255,255,255,0.2);
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background-color: white;
             border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.5s ease, height 0.5s ease;
+            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .btn:active::after { width: 300px; height: 300px; }
-        .btn:active { transform: scale(0.96); }
-        
-        .btn-primary {
-            background: var(--primary-grad);
-            color: white;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-        }
-        .btn-primary:hover { box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4); transform: translateY(-1px); }
 
-        .btn-secondary {
-            background: white;
-            color: var(--text-main);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
+        /* 2. Skeleton Loader Animation */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
         }
-        .btn-secondary:hover { border-color: #cbd5e1; background: #f8fafc; }
+        .skeleton {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+            color: transparent !important;
+        }
 
-        /* Inputs */
-        .input-group { margin-bottom: 1.25rem; position: relative; }
-        .input-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
-        .input-field {
-            width: 100%;
-            padding: 0.875rem 1rem;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: #fff;
-            font-size: 1rem;
-            color: var(--text-main);
-            transition: all 0.2s;
-            font-family: inherit;
+        /* 3. Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.3);
         }
-        .input-field:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
-        }
-        .input-icon {
-            position: absolute; left: 1rem; top: 2.4rem;
-            color: var(--text-muted); pointer-events: none;
-        }
-        .input-field.has-icon { padding-left: 2.75rem; }
 
-        /* Cards */
-        .card {
-            background: white;
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        /* 4. Card Hover Effects */
+        .card-hover {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .card-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-xl);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
-        /* List Items */
-        .list-item {
-            padding: 1.25rem;
-            border-bottom: 1px solid #f1f5f9;
-            transition: background 0.2s;
-            cursor: pointer;
-            position: relative;
+        /* Map Containers */
+        #main-map, #mini-map {
+            z-index: 1;
+            border-radius: 1rem;
         }
-        .list-item:last-child { border-bottom: none; }
-        .list-item:hover { background: #f8fafc; }
-        .list-item::before {
-            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-            background: #cbd5e1; transition: all 0.3s;
-            border-top-left-radius: 4px; border-bottom-left-radius: 4px;
-        }
-        .list-item.urgent::before { background: var(--primary); box-shadow: 0 0 10px var(--primary); }
-        .list-item.high::before { background: #f59e0b; }
-        .list-item.normal::before { background: #10b981; }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed; inset: 0; z-index: 1000;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(8px);
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-        }
-        .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .modal-container {
-            background: white; width: 90%; max-width: 460px;
-            border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-            transform: scale(0.95) translateY(10px);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            max-height: 90vh; overflow-y: auto;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .modal-overlay.active .modal-container { transform: scale(1) translateY(0); }
-
-        /* Toast */
-        .toast {
-            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); z-index: 2000;
-            padding: 14px 24px; border-radius: 50px;
-            background: #1e293b; color: white;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-            display: flex; align-items: center; gap: 12px;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            font-weight: 500; font-size: 0.95rem;
-        }
-        .toast.show { transform: translateX(-50%) translateY(0); }
-        .toast.success { background: #064e3b; border: 1px solid #059669; }
-        .toast.error { background: #7f1d1d; border: 1px solid #dc2626; }
-
-        /* Map Marker */
-        .custom-pin {
-            display: flex; align-items: center; justify-content: center;
-            width: 40px; height: 40px;
-            background: white; border-radius: 50%;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            border: 3px solid white; position: relative;
-            transition: transform 0.2s;
-        }
-        .custom-pin:hover { transform: scale(1.1); z-index: 1000; }
-        .pin-pulse {
-            position: absolute; width: 100%; height: 100%; border-radius: 50%;
-            background: inherit; z-index: -1;
-            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-        }
-        .pin-icon { font-size: 18px; }
-
-        /* Badge */
-        .badge {
-            padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800;
-            text-transform: uppercase; letter-spacing: 0.05em;
-        }
-        .badge-urgent { background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; }
-        .badge-high { background: #fffbeb; color: #f59e0b; border: 1px solid #fde68a; }
-        .badge-normal { background: #ecfdf5; color: #10b981; border: 1px solid #a7f3d0; }
-
-        /* Loader */
-        .spinner {
-            border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid white;
-            border-radius: 50%; width: 20px; height: 20px;
-            animation: spin 1s linear infinite;
-        }
-
-        /* Role Selection Cards */
-        .role-card {
-            display: flex; align-items: center; gap: 16px; padding: 20px;
-            border: 2px solid #e2e8f0; border-radius: 16px;
-            background: white; cursor: pointer; transition: all 0.2s;
-            text-align: left; width: 100%; margin-bottom: 12px;
-        }
-        .role-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .role-card.active-donor { border-color: var(--accent-donor); background: #fff1f2; }
-        .role-card.active-hospital { border-color: var(--accent-hospital); background: #eff6ff; }
-        .role-card.active-bank { border-color: var(--accent-bank); background: #f5f3ff; }
-
+        
+        /* Utilities */
+        .hidden-section { display: none !important; }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- Navbar -->
-    <nav class="glass sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
-                <!-- Logo -->
-                <div class="flex items-center gap-3 cursor-pointer" onclick="window.scrollTo(0,0)">
-                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white shadow-xl shadow-red-500/30">
-                        <i class="fas fa-heartbeat text-xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="font-bold text-xl text-slate-900 leading-none">Blood Connect</h1>
-                        <span class="text-[10px] font-bold text-slate-400 tracking-[0.2em] uppercase">Nepal Network</span>
-                    </div>
+    <!-- NAVBAR (Dynamic based on View) -->
+    <nav class="glass sticky top-0 z-50 border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
+            
+            <!-- Logo -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="App.router('landing')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white shadow-lg shadow-red-500/30">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-xl text-slate-900 leading-none" id="nav-title">Blood Connect</h1>
+                    <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase" id="nav-subtitle">Nepal Network</span>
+                </div>
+            </div>
+
+            <!-- User Area -->
+            <div class="flex items-center gap-4">
+                <!-- Logged Out -->
+                <div id="auth-buttons" class="flex items-center gap-3">
+                    <button onclick="App.openModal('login-modal')" class="text-sm font-semibold text-slate-600 hover:text-red-600 transition-colors">Log In</button>
+                    <button onclick="App.openModal('login-modal')" class="btn bg-slate-900 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-800 transition shadow-lg shadow-slate-900/20">Join Network</button>
                 </div>
 
-                <!-- Actions -->
-                <div class="flex items-center gap-4">
-                    <div id="userBadge" class="hidden items-center gap-2 px-4 py-2 bg-slate-100 border border-slate-200 rounded-full text-xs font-bold text-slate-600">
-                        <span class="relative flex h-2 w-2">
-                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                          <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                        </span>
-                        <span class="capitalize"></span>
+                <!-- Logged In -->
+                <div id="user-menu" class="hidden items-center gap-4">
+                    <div class="flex flex-col items-end mr-2">
+                        <span id="user-name-display" class="text-sm font-bold text-slate-800 leading-none">User</span>
+                        <span id="user-role-display" class="text-[10px] font-bold text-red-500 uppercase tracking-wider bg-red-50 px-2 py-0.5 rounded-full mt-1">Donor</span>
                     </div>
-                    <button id="navAuthBtn" onclick="App.handleAuthClick()" class="btn btn-primary text-sm shadow-xl shadow-red-500/20">
-                        Join Network
+                    <div class="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
+                        <img src="https://picsum.photos/seed/user/100/100" alt="Avatar" class="w-full h-full object-cover">
+                    </div>
+                    <button onclick="App.logout()" class="text-slate-400 hover:text-red-500 transition-colors ml-2" title="Sign Out">
+                        <i class="fas fa-sign-out-alt"></i>
                     </button>
                 </div>
             </div>
         </div>
     </nav>
 
-    <main class="flex-1">
-        
-        <!-- Hero Section -->
-        <section class="relative bg-slate-900 text-white pt-20 pb-32 overflow-hidden">
-            <!-- Background Gradients -->
-            <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-red-600 rounded-full mix-blend-multiply filter blur-[100px] opacity-30 animate-pulse"></div>
-            <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600 rounded-full mix-blend-multiply filter blur-[100px] opacity-20"></div>
-            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
+    <!-- CONTENT CONTAINER -->
+    <div id="app-container" class="flex-1 w-full relative">
 
-            <div class="relative max-w-5xl mx-auto px-4 text-center z-10">
-                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 animate-fade-in-up">
-                    <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-                    <span class="text-sm font-medium tracking-wide text-slate-300">Live Tracking Active</span>
+        <!-- ======================= LANDING VIEW ======================= -->
+        <main id="view-landing" class="fade-in">
+            <!-- Hero -->
+            <section class="relative bg-slate-900 text-white pt-24 pb-32 overflow-hidden">
+                <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
+                <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600 rounded-full mix-blend-multiply filter blur-[120px] opacity-20 animate-pulse"></div>
+                
+                <div class="relative max-w-5xl mx-auto px-4 text-center z-10">
+                    <h1 class="text-5xl md:text-7xl font-extrabold mb-6 leading-tight tracking-tight">
+                        Connecting Blood<br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-300">To Those Who Need It</span>
+                    </h1>
+                    <p class="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto">
+                        The fastest way to find blood donors in Nepal. Verified hospitals, real-time alerts, and life-saving connections.
+                    </p>
+                    <div class="flex flex-col sm:flex-row justify-center gap-4">
+                        <button onclick="document.getElementById('public-map-section').scrollIntoView({behavior: 'smooth'})" class="bg-white text-red-600 hover:bg-slate-50 px-8 py-4 rounded-2xl font-bold text-lg shadow-xl transition transform hover:-translate-y-1">
+                            <i class="fas fa-search-location mr-2"></i> Find Blood
+                        </button>
+                        <button onclick="App.openModal('login-modal')" class="bg-transparent border-2 border-white/20 text-white hover:bg-white/10 px-8 py-4 rounded-2xl font-bold text-lg transition">
+                            <i class="fas fa-plus mr-2"></i> Donate
+                        </button>
+                    </div>
                 </div>
-                
-                <h1 class="text-5xl md:text-7xl font-extrabold mb-6 leading-tight tracking-tight animate-fade-in-up" style="animation-delay: 0.1s;">
-                    Connecting Blood<br>
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-300">To Those Who Need It</span>
-                </h1>
-                
-                <p class="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in-up" style="animation-delay: 0.2s;">
-                    The fastest way to find blood donors in Nepal. Verified hospitals, real-time alerts, and life-saving connections.
-                </p>
-                
-                <div class="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in-up" style="animation-delay: 0.3s;">
-                    <button onclick="document.getElementById('map-section').scrollIntoView({behavior: 'smooth'})" class="btn bg-white text-red-600 hover:bg-slate-50 border-none shadow-2xl shadow-white/10 px-8 py-4 text-lg font-bold rounded-2xl">
-                        <i class="fas fa-search-location"></i> Find Blood
-                    </button>
-                    <button onclick="App.handleAuthClick()" class="btn bg-transparent border-2 border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg font-bold rounded-2xl">
-                        <i class="fas fa-plus"></i> Donate
-                    </button>
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- Stats Bar -->
-        <div class="relative z-20 -mt-16 mx-4 max-w-6xl lg:mx-auto">
-            <div class="card grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-100 shadow-2xl shadow-slate-200/60 p-0 rounded-2xl">
-                <div class="p-8 text-center">
-                    <div class="text-4xl font-extrabold text-slate-800 mb-2 counter" data-target="1240">0</div>
-                    <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Donors</div>
+            <!-- Public Map Section -->
+            <section id="public-map-section" class="max-w-7xl mx-auto px-4 py-20 -mt-16">
+                <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col lg:flex-row h-[600px]">
+                    <div class="lg:w-2/3 h-64 lg:h-full relative bg-slate-100">
+                        <div id="main-map" class="w-full h-full"></div>
+                    </div>
+                    <div class="lg:w-1/3 p-8 flex flex-col border-l border-slate-100">
+                        <h2 class="text-2xl font-bold text-slate-900 mb-2">Live Requests</h2>
+                        <p class="text-slate-500 text-sm mb-6">Real-time updates from verified hospitals.</p>
+                        
+                        <div id="public-request-list" class="flex-1 overflow-y-auto space-y-4 pr-2">
+                            <!-- Loaded via JS -->
+                        </div>
+                    </div>
                 </div>
-                <div class="p-8 text-center">
-                    <div class="text-4xl font-extrabold text-red-600 mb-2 counter" data-target="85">0</div>
-                    <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Saved</div>
-                </div>
-                <div class="p-8 text-center">
-                    <div class="text-4xl font-extrabold text-slate-800 mb-2 counter" data-target="42">0</div>
-                    <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Hospitals</div>
-                </div>
-                <div class="p-8 text-center">
-                    <div class="text-4xl font-extrabold text-blue-600 mb-2">24/7</div>
-                    <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Active</div>
-                </div>
-            </div>
-        </div>
+            </section>
+        </main>
 
-        <!-- Map Section -->
-        <section id="map-section" class="max-w-7xl mx-auto px-4 py-20">
-            <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+        <!-- ======================= DONOR DASHBOARD ======================= -->
+        <main id="view-donor" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full hidden-section fade-in">
+            
+            <!-- Welcome Header -->
+            <div class="mb-10 flex justify-between items-end">
                 <div>
-                    <h2 class="text-3xl font-bold text-slate-900">Live Requests</h2>
-                    <p class="text-slate-500 text-sm mt-2">Real-time updates across the country.</p>
+                    <h2 class="text-3xl font-bold text-slate-900">Welcome, <span id="dash-name" class="text-red-600">Hero</span>!</h2>
+                    <p class="text-slate-500 mt-1">Thank you for being a hero. Your profile is active and ready to help.</p>
                 </div>
-                <div class="flex gap-2 p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm">
-                    <select id="filterType" onchange="UI.renderList()" class="text-sm border-none bg-transparent font-semibold text-slate-600 px-4 py-2 focus:ring-0 cursor-pointer">
-                        <option value="all">All Types</option>
-                        <option value="A+">A+</option><option value="A-">A-</option>
-                        <option value="B+">B+</option><option value="B-">B-</option>
-                        <option value="AB+">AB+</option><option value="AB-">AB-</option>
-                        <option value="O+">O+</option><option value="O-">O-</option>
-                    </select>
-                    <div class="w-px h-8 bg-slate-200 self-center"></div>
-                    <button onclick="Map.centerToUser()" class="text-sm font-bold text-slate-600 hover:text-red-600 px-4 py-2 transition-colors">
-                        <i class="fas fa-location-arrow mr-2"></i> Near Me
-                    </button>
-                </div>
+                <button onclick="App.router('landing')" class="text-sm font-semibold text-slate-400 hover:text-red-600 transition">Back to Map</button>
             </div>
 
-            <div class="grid lg:grid-cols-3 gap-8 h-[650px]">
-                <!-- Map -->
-                <div class="lg:col-span-2 h-full relative group rounded-3xl overflow-hidden shadow-2xl border border-slate-200">
-                    <div id="map" class="w-full h-full bg-slate-100 z-10"></div>
-                    
-                    <div class="absolute top-5 right-5 z-[500] flex flex-col gap-3">
-                        <button onclick="Map.centerToUser()" class="w-12 h-12 bg-white rounded-2xl shadow-lg flex items-center justify-center text-slate-600 hover:text-red-600 hover:scale-105 transition-all">
-                            <i class="fas fa-crosshairs text-lg"></i>
-                        </button>
-                        <button onclick="App.pollData()" class="w-12 h-12 bg-white rounded-2xl shadow-lg flex items-center justify-center text-slate-600 hover:text-blue-600 hover:scale-105 transition-all">
-                            <i class="fas fa-sync-alt text-lg"></i>
-                        </button>
-                    </div>
-
-                    <div id="mapError" class="absolute inset-0 bg-white/95 backdrop-blur-sm z-[1000] hidden flex-col items-center justify-center p-6 text-center">
-                        <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-3xl mb-6"><i class="fas fa-wifi"></i></div>
-                        <h3 class="font-bold text-xl text-slate-800 mb-2">Connection Lost</h3>
-                        <p class="text-slate-500 mb-8">We couldn't load the live map. Please check your internet.</p>
-                        <button onclick="App.retry()" class="btn btn-primary shadow-xl shadow-red-500/30 px-8">Try Again</button>
-                    </div>
-                </div>
-
-                <!-- List -->
-                <div class="lg:col-span-1 h-full flex flex-col bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-                    <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                        <div>
-                            <span id="sosCount" class="text-3xl font-extrabold text-slate-900">0</span>
-                            <span class="text-xs font-bold text-slate-400 ml-1 uppercase tracking-wider">Requests</span>
-                        </div>
-                        <div class="flex gap-3 text-[10px] font-bold uppercase tracking-widest">
-                            <span class="flex items-center gap-1.5 text-red-500"><div class="w-2 h-2 rounded-full bg-red-500"></div> Critical</span>
-                            <span class="flex items-center gap-1.5 text-green-500"><div class="w-2 h-2 rounded-full bg-green-500"></div> Normal</span>
-                        </div>
-                    </div>
-                    
-                    <div id="sosList" class="flex-1 overflow-y-auto relative scroll-smooth">
-                        <div id="listLoader" class="p-6 space-y-6">
-                            <div class="h-24 bg-slate-100 rounded-2xl animate-pulse"></div>
-                            <div class="h-24 bg-slate-100 rounded-2xl animate-pulse"></div>
-                            <div class="h-24 bg-slate-100 rounded-2xl animate-pulse"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Add this block to index.html -->
-
-<section class="py-12 bg-white border-b border-slate-100">
-    <div class="max-w-6xl mx-auto px-4">
-        <h2 class="text-2xl font-bold text-center text-slate-800 mb-10">Resource Directory</h2>
-        <div class="grid md:grid-cols-2 gap-8">
-            <!-- Educational Content -->
-            <div class="bg-red-50 p-6 rounded-2xl border border-red-100">
-                <h3 class="font-bold text-xl text-red-700 mb-4"><i class="fas fa-book-medical mr-2"></i> Donation Guidelines</h3>
-                <ul class="space-y-3 text-slate-600 text-sm">
-                    <li class="flex gap-3"><i class="fas fa-check text-green-500 mt-1"></i> You must be between 18-60 years old.</li>
-                    <li class="flex gap-3"><i class="fas fa-check text-green-500 mt-1"></i> Weight at least 50kg.</li>
-                    <li class="flex gap-3"><i class="fas fa-check text-green-500 mt-1"></i> Hemoglobin level ≥ 12.5 g/dL.</li>
-                    <li class="flex gap-3"><i class="fas fa-check text-green-500 mt-1"></i> No recent tattoos or piercings (6 months).</li>
-                </ul>
-            </div>
-
-            <!-- Searchable Directories -->
-            <div class="bg-blue-50 p-6 rounded-2xl border border-blue-100">
-                <h3 class="font-bold text-xl text-blue-700 mb-4"><i class="fas fa-hospital-alt mr-2"></i> Find Blood Banks</h3>
-                <div class="relative mb-4">
-                    <input type="text" placeholder="Search by city or name..." class="w-full p-3 rounded-lg border border-blue-200 focus:ring-2 focus:ring-blue-500 outline-none">
-                    <i class="fas fa-search absolute right-4 top-4 text-blue-400"></i>
-                </div>
-                <div class="space-y-2">
-                    <div class="flex justify-between items-center bg-white p-3 rounded border border-blue-100">
-                        <span class="font-bold text-slate-700">Central Blood Bank, Teku</span>
-                        <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Open</span>
-                    </div>
-                    <div class="flex justify-between items-center bg-white p-3 rounded border border-blue-100">
-                        <span class="font-bold text-slate-700">B P Koirala Inst.</span>
-                        <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Open</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Emergency Contacts & FAQ -->
-<section class="py-12 bg-slate-900 text-white">
-    <div class="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-12">
-        <div>
-            <h3 class="text-xl font-bold mb-6 text-red-400"><i class="fas fa-phone-volume mr-2"></i> Emergency Contacts</h3>
-            <div class="space-y-4">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center"><i class="fas fa-ambulance"></i></div>
-                    <div>
-                        <div class="font-bold">National Ambulance</div>
-                        <div class="text-slate-400 text-sm">102</div>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center"><i class="fas fa-tint"></i></div>
-                    <div>
-                        <div class="font-bold">Blood Connect Helpline</div>
-                        <div class="text-slate-400 text-sm">+977-9800000000</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div>
-            <h3 class="text-xl font-bold mb-6 text-blue-400"><i class="fas fa-question-circle mr-2"></i> FAQs</h3>
-            <div class="space-y-4">
-                <details class="group bg-slate-800 rounded-lg">
-                    <summary class="p-4 cursor-pointer font-medium list-none flex justify-between items-center">Is blood donation safe? <i class="fas fa-chevron-down group-open:rotate-180 transition-transform"></i></summary>
-                    <div class="p-4 pt-0 text-slate-400 text-sm">Yes, it is safe. All equipment is sterile and used only once.</div>
-                </details>
-                <details class="group bg-slate-800 rounded-lg">
-                    <summary class="p-4 cursor-pointer font-medium list-none flex justify-between items-center">How often can I donate? <i class="fas fa-chevron-down group-open:rotate-180 transition-transform"></i></summary>
-                    <div class="p-4 pt-0 text-slate-400 text-sm">Men can donate every 3 months, women every 4 months.</div>
-                </details>
-            </div>
-        </div>
-    </div>
-</section>
-    </main>
-
-    <!-- AUTH MODAL -->
-    <div id="loginModal" class="modal-overlay">
-        <div class="modal-container">
-            <!-- Header -->
-            <div class="relative p-8 pb-0 text-center">
-                <button onclick="UI.closeModal('loginModal')" class="absolute top-6 right-6 w-10 h-10 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-all hover:rotate-90 duration-300">
-                    <i class="fas fa-times"></i>
-                </button>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
-                <div id="authIcon" class="w-20 h-20 rounded-3xl mx-auto mb-6 flex items-center justify-center text-3xl shadow-2xl transition-all duration-500 bg-slate-100 text-slate-400">
+                <!-- Left Column: Profile & Status -->
+                <div class="space-y-6">
+                    
+                    <!-- Availability Toggle Card (Interactive Upgrade) -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+                        
+                        <div class="relative z-10 flex justify-between items-center">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">My Status</h3>
+                                <div id="status-text" class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-slate-300 animate-pulse" id="status-indicator"></span>
+                                    <span id="status-label">Checking...</span>
+                                </div>
+                                <p class="text-xs text-slate-400 mt-2">Toggle to change visibility</p>
+                            </div>
+                            
+                            <!-- Toggle Switch Implementation -->
+                            <div class="relative">
+                                <input type="checkbox" id="avail-toggle" class="sr-only toggle-checkbox" onchange="App.toggleAvailability()">
+                                <label for="avail-toggle" class="toggle-label shadow-inner"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Summary Grid (Card Layout) -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Blood Type Card -->
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 text-center card-hover">
+                            <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-tint"></i>
+                            </div>
+                            <div class="text-xs font-bold text-slate-400 uppercase">Blood Type</div>
+                            <div class="text-2xl font-extrabold text-slate-800 mt-1" id="dash-blood">A+</div>
+                        </div>
+
+                        <!-- Location Card -->
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 text-center card-hover">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="text-xs font-bold text-slate-400 uppercase">Location</div>
+                            <div class="text-sm font-bold text-slate-800 mt-1 truncate" id="dash-loc">Kathmandu</div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Mini Cards -->
+                    <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 text-white shadow-lg">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-sm font-medium text-slate-300">Lifetime Impact</span>
+                            <i class="fas fa-award text-yellow-500"></i>
+                        </div>
+                        <div class="flex justify-between text-center">
+                            <div>
+                                <div class="text-2xl font-bold">3</div>
+                                <div class="text-[10px] uppercase text-slate-400">Donations</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-red-400">3</div>
+                                <div class="text-[10px] uppercase text-slate-400">Lives Saved</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Requests & Mini Map -->
+                <div class="lg:col-span-2 space-y-6">
+                    
+                    <!-- Integrated Mini-Map Section -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-64 relative">
+                        <div class="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur px-3 py-1 rounded-lg shadow-sm border border-slate-100">
+                            <span class="text-xs font-bold text-slate-600"><i class="fas fa-crosshairs mr-1 text-red-500"></i> Requests Near You</span>
+                        </div>
+                        <div id="mini-map" class="w-full h-full"></div>
+                    </div>
+
+                    <!-- Blood Requests List -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-bold text-slate-800">Blood Requests Near You</h3>
+                            <span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-md">Filtered by <span class="font-bold text-slate-600">A+</span></span>
+                        </div>
+                        
+                        <!-- Skeleton Loader (Visible initially) -->
+                        <div id="request-skeleton" class="space-y-4">
+                            <div class="h-20 w-full bg-slate-50 rounded-xl p-4 flex gap-4">
+                                <div class="w-12 h-12 skeleton rounded-full flex-shrink-0"></div>
+                                <div class="flex-1 space-y-2">
+                                    <div class="h-4 skeleton w-1/3"></div>
+                                    <div class="h-3 skeleton w-1/2"></div>
+                                </div>
+                            </div>
+                            <div class="h-20 w-full bg-slate-50 rounded-xl p-4 flex gap-4">
+                                <div class="w-12 h-12 skeleton rounded-full flex-shrink-0"></div>
+                                <div class="flex-1 space-y-2">
+                                    <div class="h-4 skeleton w-1/4"></div>
+                                    <div class="h-3 skeleton w-1/3"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actual List (Hidden initially) -->
+                        <div id="dash-request-list" class="space-y-4 hidden-section">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- ======================= HOSPITAL DASHBOARD ======================= -->
+        <main id="view-hospital" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full hidden-section fade-in">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Create Request Form -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-24">
+                        <h2 class="text-xl font-bold mb-6 flex items-center gap-2 text-blue-600">
+                            <i class="fas fa-plus-circle"></i> Post Request
+                        </h2>
+                        <form onsubmit="event.preventDefault(); App.createRequest();" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Blood Type</label>
+                                <select id="req-type" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option>A+</option><option>O+</option><option>B+</option><option>AB+</option>
+                                    <option>A-</option><option>O-</option><option>B-</option><option>AB-</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Units Needed</label>
+                                <input type="number" id="req-units" value="2" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Urgency</label>
+                                <select id="req-urgency" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="critical">Critical (Immediate)</option>
+                                    <option value="high">High (24 Hours)</option>
+                                    <option value="normal">Normal</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-500/30 transition transform active:scale-95">
+                                Broadcast to Network
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Active Requests -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 min-h-[500px]">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold">My Active Requests</h2>
+                            <button onclick="App.loadHospitalData()" class="text-sm text-blue-600 font-semibold hover:underline">Refresh</button>
+                        </div>
+                        <div id="hospital-request-list" class="space-y-4">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- ======================= MODALS ======================= -->
+    
+    <!-- Login Modal -->
+    <div id="login-modal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="App.closeModal('login-modal')"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 fade-in">
+            <button onclick="App.closeModal('login-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fas fa-times text-xl"></i></button>
+            
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">
                     <i class="fas fa-users"></i>
                 </div>
-                
-                <h3 id="authTitle" class="text-2xl font-bold text-slate-900">Welcome</h3>
-                <p id="authSubtitle" class="text-slate-500 text-sm mt-2">Select your category to continue</p>
+                <h3 class="text-2xl font-bold text-slate-900">Welcome Back</h3>
+                <p class="text-slate-500 text-sm mt-1">Select your role to continue</p>
             </div>
 
-            <div class="p-8 pt-6">
-                
-                <!-- STEP 0: ROLE SELECTION -->
-                <div id="authStep0" class="auth-step transition-opacity duration-300">
-                    <!-- Donor -->
-                    <button onclick="Auth.selectRole('donor')" class="role-card group">
-                        <div class="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-slate-800 group-hover:text-rose-600 transition-colors">Donor</h4>
-                            <p class="text-xs text-slate-400">I want to save lives</p>
-                        </div>
-                        <i class="fas fa-chevron-right ml-auto text-slate-300 group-hover:translate-x-1 transition-transform"></i>
-                    </button>
-
-                    <!-- Hospital -->
-                    <button onclick="Auth.selectRole('hospital')" class="role-card group">
-                        <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform">
-                            <i class="fas fa-hospital"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-slate-800 group-hover:text-blue-600 transition-colors">Hospital</h4>
-                            <p class="text-xs text-slate-400">Manage patient needs</p>
-                        </div>
-                        <i class="fas fa-chevron-right ml-auto text-slate-300 group-hover:translate-x-1 transition-transform"></i>
-                    </button>
-
-                    <!-- Blood Bank -->
-                    <button onclick="Auth.selectRole('blood_bank')" class="role-card group">
-                        <div class="w-14 h-14 rounded-2xl bg-violet-50 text-violet-500 flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform">
-                            <i class="fas fa-tint"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-slate-800 group-hover:text-violet-600 transition-colors">Blood Bank</h4>
-                            <p class="text-xs text-slate-400">Inventory & Supply</p>
-                        </div>
-                        <i class="fas fa-chevron-right ml-auto text-slate-300 group-hover:translate-x-1 transition-transform"></i>
-                    </button>
-                </div>
-
-                <!-- STEP 1: EMAIL -->
-                <div id="authStep1" class="auth-step hidden transition-opacity duration-300">
-                    <button onclick="Auth.reset()" class="text-xs text-slate-400 hover:text-slate-600 mb-6 flex items-center gap-1 font-bold"><i class="fas fa-arrow-left"></i> CHANGE ROLE</button>
-                    <div class="input-group">
-                        <label class="input-label">Email Address</label>
-                        <div class="relative">
-                            <i class="fas fa-envelope input-icon"></i>
-                            <input type="email" id="inputEmail" class="input-field has-icon" placeholder="name@example.com">
-                        </div>
+            <div class="space-y-3">
+                <button onclick="App.login('donor')" class="w-full flex items-center gap-4 p-4 border border-slate-200 rounded-xl hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 transition group">
+                    <div class="w-10 h-10 rounded-lg bg-rose-100 text-rose-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i class="fas fa-user"></i>
                     </div>
-                    <button onclick="Auth.sendOTP()" id="btnOtp" class="btn btn-primary w-full shadow-xl shadow-red-500/20 py-4 text-lg">Send Verification Code</button>
-                </div>
+                    <div class="text-left">
+                        <div class="font-bold text-slate-800">Donor</div>
+                        <div class="text-xs text-slate-400">I want to save lives</div>
+                    </div>
+                </button>
 
-                <!-- STEP 2: OTP -->
-                <div id="authStep2" class="auth-step hidden transition-opacity duration-300">
-                    <div class="bg-blue-50 p-5 rounded-2xl mb-8 border border-blue-100">
-                        <p class="text-sm text-blue-800 text-center font-semibold">Enter the 6-digit code sent to</p>
-                        <p id="emailDisplay" class="text-center font-bold text-blue-900 text-lg mt-1"></p>
+                <button onclick="App.login('hospital')" class="w-full flex items-center gap-4 p-4 border border-slate-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition group">
+                    <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i class="fas fa-hospital"></i>
                     </div>
-                    <div class="input-group">
-                        <label class="input-label text-center">Verification Code</label>
-                        <input type="text" id="inputOtp" maxlength="6" class="input-field text-center text-3xl tracking-[0.5em] font-mono py-4" placeholder="000000">
+                    <div class="text-left">
+                        <div class="font-bold text-slate-800">Hospital</div>
+                        <div class="text-xs text-slate-400">Manage patient needs</div>
                     </div>
-                    <button onclick="Auth.verify()" id="btnVerify" class="btn btn-primary w-full shadow-xl shadow-red-500/20 py-4 text-lg">Verify & Continue</button>
-                    <p class="text-center text-xs text-slate-400 mt-6">Demo Code: <span class="font-bold bg-slate-100 px-2 py-1 rounded text-slate-600">123456</span></p>
-                </div>
-
-                <!-- STEP 3: REGISTER -->
-                <div id="authStep3" class="auth-step hidden transition-opacity duration-300">
-                    <p class="text-slate-500 mb-8 text-center font-medium">Complete your profile to continue.</p>
-                    
-                    <div class="input-group">
-                        <label class="input-label">Name / Organization</label>
-                        <input type="text" id="regName" class="input-field" placeholder="e.g. Grandi Hospital">
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="input-group">
-                            <label class="input-label">Phone</label>
-                            <input type="tel" id="regPhone" class="input-field" placeholder="+977">
-                        </div>
-                        <div class="input-group">
-                            <label class="input-label">City</label>
-                            <input type="text" id="regLoc" class="input-field" placeholder="Kathmandu">
-                        </div>
-                    </div>
-
-                    <div id="donorExtras" class="hidden">
-                        <div class="input-group">
-                            <label class="input-label">Blood Type</label>
-                            <select id="regBlood" class="input-field">
-                                <option value="">Select Type</option>
-                                <option value="A+">A+</option><option value="O+">O+</option><option value="B+">B+</option><option value="AB+">AB+</option>
-                                <option value="A-">A-</option><option value="O-">O-</option><option value="B-">B-</option><option value="AB-">AB-</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <button onclick="Auth.register()" id="btnReg" class="btn btn-primary w-full shadow-xl shadow-red-500/20 mt-4 py-4 text-lg">Create Account</button>
-                </div>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- DASHBOARD MODAL -->
-    <div id="dashModal" class="modal-overlay">
-        <div class="modal-container max-w-md">
-            <div class="bg-slate-50 p-6 border-b border-slate-100 flex justify-between items-center rounded-t-3xl">
-                <div>
-                    <h3 class="font-bold text-xl text-slate-900" id="dashTitle">Dashboard</h3>
-                    <p class="text-xs text-slate-500 mt-0.5" id="dashSubtitle"></p>
-                </div>
-                <button onclick="UI.closeModal('dashModal')" class="w-10 h-10 rounded-full hover:bg-slate-200 flex items-center justify-center text-slate-400 transition-colors hover:rotate-90"><i class="fas fa-times"></i></button>
-            </div>
-            <div id="dashContent" class="p-8"></div>
-        </div>
-    </div>
-
-    <!-- Toast -->
-    <div id="toast" class="toast" role="alert">
-        <i id="toastIcon" class="fas fa-info-circle text-xl"></i> 
-        <div class="flex flex-col"><span id="toastMsg" class="font-semibold">Notification</span></div>
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-xl z-[200] flex items-center gap-3 transition-all duration-300 opacity-0 translate-y-10 pointer-events-none">
+        <i id="toast-icon" class="fas fa-info-circle"></i>
+        <span id="toast-msg" class="text-sm font-medium">Notification</span>
     </div>
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    
     <script>
-        // ==========================================
-        // BLOOD CONNECT NEPAL - V3.0 (PREMIUM)
-        // ==========================================
+        /**
+         * BLOOD CONNECT - FRONTEND SIMULATION
+         */
+
         const CONFIG = {
-            SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyFrRsw-Ru2PeQcfYgTZ0PdPMhwWE7ID-0cvxdl74blLNTwUn4Gd8bhwZmM1PwdGX1J/exec',
-            DEBUG: true,
-            SESSION_EXPIRY_HOURS: 24,
-            POLL_INTERVAL: 30000,
+            center: [27.7172, 85.3240], // Kathmandu
+            zoom: 13
         };
 
+        // --- STATE MANAGEMENT ---
         const State = {
-            user: null, selectedRole: null, sos: [], userLocation: null, lastFetch: null, error: null,
-            update(newState) { Object.assign(this, newState); UI.render(); }
-        };
-        const log = (...args) => CONFIG.DEBUG && console.log('[BC]', ...args);
-
-        // --- UTILS ---
-        const Utils = {
-            safeString: (str) => str ? String(str).replace(/[<>"']/g, '') : '',
-            timeAgo: (date) => {
-                try {
-                    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-                    if (seconds < 60) return "Just now";
-                    const intervals = { year: 31536000, month: 2592000, week: 604800, day: 86400, hour: 3600, minute: 60 };
-                    for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-                        const interval = Math.floor(seconds / secondsInUnit);
-                        if (interval >= 1) return `${interval} ${unit}${interval === 1 ? "" : "s"} ago`;
-                    }
-                } catch (e) { return "Unknown time"; }
-                return "Just now";
-            },
-            getDistance: (lat1, lon1, lat2, lon2) => {
-                if (!lat1 || !lat2) return null;
-                const R = 6371; const dLat = (lat2 - lat1) * Math.PI / 180;
-                const dLon = (lon2 - lon1) * Math.PI / 180;
-                const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                return (R * c).toFixed(1);
-            },
-            validateEmail: (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
-        };
-
-        // --- API ---
-        const API = {
-            async post(action, data = {}) {
-                if (!navigator.onLine) throw new Error("You are offline.");
-                const payload = { action, ...data };
-                if (State.user) { payload.token = State.user.token; payload.userId = State.user.id; }
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 15000);
-                    const res = await fetch(CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), signal: controller.signal });
-                    clearTimeout(timeoutId);
-                    if (!res.ok) throw new Error(`Server Error: ${res.status}`);
-                    const text = await res.text();
-                    let json; try { json = JSON.parse(text); } catch (e) { throw new Error("Invalid response"); }
-                    if (!json.success) throw new Error(json.error || "Request failed");
-                    if (action === 'getSOS') State.lastFetch = new Date().toISOString();
-                    return json;
-                } catch (e) { log("API Error:", e.message); throw e; }
+            currentUser: null, // { name, role, bloodType, location, available }
+            requests: [], // Array of request objects
+            maps: {
+                main: null,
+                mini: null,
+                markersLayer: L.layerGroup() // Used to manage marker groups easily
             }
         };
 
-        // --- MAP ---
-        const Map = {
-            init() {
-                try {
-                    this.map = L.map('map', { zoomControl: false }).setView([27.7172, 85.3240], 12);
-                    L.control.zoom({ position: 'bottomright' }).addTo(this.map);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 19 }).addTo(this.map);
-                    this.markers = L.markerClusterGroup({
-                        showCoverageOnHover: false, spiderfyOnMaxZoom: true,
-                        iconCreateFunction: (cluster) => L.divIcon({ 
-                            html: `<div class="w-12 h-12 bg-slate-800 text-white rounded-full flex items-center justify-center text-sm font-bold border-4 border-white shadow-xl">${cluster.getChildCount()}</div>`, 
-                            className: '', iconSize: [48, 48] 
-                        })
-                    });
-                    this.map.addLayer(this.markers);
-                } catch (e) { console.error("Map init failed", e); }
-            },
-            renderMarkers() {
-                if (!this.markers) return;
-                this.markers.clearLayers();
-                State.sos.forEach(s => {
-                    if(s.lat && s.lng) {
-                        const color = s.urgency === 'critical' ? '#ef4444' : s.urgency === 'high' ? '#f59e0b' : '#10b981';
-                        const pulse = s.urgency === 'critical' ? '<div class="pin-pulse" style="background:'+color+'"></div>' : '';
-                        const icon = L.divIcon({
-                            className: '', 
-                            html: `<div class="custom-pin" style="color:${color}">${pulse}<i class="fas fa-tint pin-icon"></i></div>`, 
-                            iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -40]
-                        });
-                        const marker = L.marker([s.lat, s.lng], { icon });
-                        let distHtml = '';
-                        if (State.userLocation) {
-                            const d = Utils.getDistance(State.userLocation.lat, State.userLocation.lng, s.lat, s.lng);
-                            if (d) distHtml = `<div class="mt-2 text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg inline-flex items-center gap-1"><i class="fas fa-location-arrow"></i> ${d} km</div>`;
-                        }
-                        marker.bindPopup(`
-                            <div class="font-sans min-w-[220px]">
-                                <div class="flex justify-between items-center mb-3">
-                                    <span class="font-black text-xl" style="color:${color}">${s.bloodType}</span>
-                                    <span class="text-[10px] font-bold uppercase bg-slate-100 px-2 py-1 rounded text-slate-500">${s.urgency}</span>
-                                </div>
-                                <h4 class="font-bold text-slate-800 text-base mb-1">${Utils.safeString(s.hospital)}</h4>
-                                <p class="text-xs text-slate-500 mb-3 truncate">${Utils.safeString(s.location)}</p>
-                                ${distHtml}
-                                ${State.user ? `<button onclick="App.respond('${s.id}')" class="w-full mt-2 bg-slate-900 text-white text-sm py-3 rounded-xl font-bold hover:bg-slate-700 transition shadow-lg">I Can Donate</button>` : ''}
-                            </div>
-                        `, { maxWidth: 250 });
-                        this.markers.addLayer(marker);
-                    }
-                });
-            },
-            centerToUser() {
-                if (!navigator.geolocation) return UI.showToast("GPS not supported", "error");
-                UI.showToast("Locating you...", "loading");
-                navigator.geolocation.getCurrentPosition(pos => {
-                    State.update({ userLocation: { lat: pos.coords.latitude, lng: pos.coords.longitude }});
-                    this.map.flyTo([pos.coords.latitude, pos.coords.longitude], 14, { duration: 1.5 });
-                    UI.showToast("Location found", "success");
-                }, err => UI.showToast("Could not get location", "error"));
-            }
-        };
+        // --- MOCK DATA GENERATOR ---
+        function getMockRequests() {
+            return [
+                { id: 'SOS_01', hospital: 'Grande Hospital', bloodType: 'A+', units: 2, urgency: 'critical', location: 'Bansbari', lat: 27.7272, lng: 85.3340, time: new Date(), status: 'Active' },
+                { id: 'SOS_02', hospital: 'TU Teaching Hospital', bloodType: 'O+', units: 1, urgency: 'high', location: 'Maharajgunj', lat: 27.7122, lng: 85.3140, time: new Date(Date.now() - 3600000), status: 'Active' },
+                { id: 'SOS_03', hospital: 'Patan Hospital', bloodType: 'B+', units: 3, urgency: 'normal', location: 'Lalitpur', lat: 27.6772, lng: 85.3240, time: new Date(Date.now() - 7200000), status: 'Active' },
+            ];
+        }
 
-        // --- UI ---
-        const UI = {
+        // --- APP CONTROLLER ---
+        const App = {
             init() {
-                try {
-                    const saved = localStorage.getItem('bc_session');
-                    if (saved) {
-                        const session = JSON.parse(saved);
-                        if (new Date(session.expiresAt) > new Date()) State.update({ user: session });
-                        else localStorage.removeItem('bc_session');
-                    }
-                    this.render(); this.animateCounters();
-                } catch (e) { log("UI Init Error", e); }
+                this.initMaps();
+                this.loadRequests();
             },
-            render() { this.renderNav(); this.renderList(); if(Map.map) Map.renderMarkers(); },
-            renderNav() {
-                const btn = document.getElementById('navAuthBtn');
-                const badge = document.getElementById('userBadge');
-                if (State.user) {
-                    btn.innerHTML = '<i class="fas fa-th-large"></i> Dashboard';
-                    btn.onclick = () => this.openDashboard();
-                    badge.querySelector('span:not(.relative)').textContent = State.user.role.replace('_', ' ');
-                    badge.classList.remove('hidden'); badge.classList.add('flex');
-                } else {
-                    btn.innerHTML = 'Join Network';
-                    btn.onclick = () => this.openModal('loginModal');
-                    badge.classList.add('hidden'); badge.classList.remove('flex');
+
+            // --- ROUTER ---
+            router(viewName) {
+                document.querySelectorAll('main').forEach(el => el.classList.add('hidden-section'));
+                const target = document.getElementById(`view-${viewName}`);
+                if (target) {
+                    target.classList.remove('hidden-section');
+                    target.classList.remove('fade-in');
+                    void target.offsetWidth; 
+                    target.classList.add('fade-in');
+                }
+
+                this.updateNav(viewName);
+
+                // Fix map rendering issues
+                setTimeout(() => {
+                    if (viewName === 'landing' && State.maps.main) State.maps.main.invalidateSize();
+                    if (viewName === 'donor' && State.maps.mini) State.maps.mini.invalidateSize();
+                }, 100);
+            },
+
+            updateNav(view) {
+                const title = document.getElementById('nav-title');
+                const subtitle = document.getElementById('nav-subtitle');
+                
+                if (view === 'landing') {
+                    title.innerText = "Blood Connect";
+                    subtitle.innerText = "Nepal Network";
+                } else if (view === 'donor') {
+                    title.innerText = "Donor Portal";
+                    subtitle.innerText = "Personal Dashboard";
+                } else if (view === 'hospital') {
+                    title.innerText = "Hospital Dashboard";
+                    subtitle.innerText = "Request Management";
                 }
             },
-            renderList() {
-                const container = document.getElementById('sosList');
-                const countEl = document.getElementById('sosCount');
-                const loader = document.getElementById('listLoader');
-                const filter = document.getElementById('filterType').value;
-                if (State.sos.length > 0) loader.style.display = 'none';
-                let filtered = State.sos;
-                if (filter !== 'all') filtered = filtered.filter(s => s.bloodType === filter);
-                countEl.textContent = filtered.length;
-                if (State.error) {
-                    container.innerHTML = `<div class="p-12 text-center text-red-500 animate-fade-in"><i class="fas fa-exclamation-circle text-4xl mb-4"></i><p class="font-medium">Failed to load requests</p></div>`;
-                    document.getElementById('mapError').classList.remove('hidden'); document.getElementById('mapError').style.display = 'flex';
+
+            // --- AUTH SIMULATION ---
+            openModal(id) { document.getElementById(id).classList.remove('hidden'); },
+            closeModal(id) { document.getElementById(id).classList.add('hidden'); },
+
+            login(role) {
+                this.closeModal('login-modal');
+                
+                State.currentUser = {
+                    name: role === 'donor' ? 'Alex Sherpa' : 'City Hospital Admin',
+                    role: role,
+                    bloodType: role === 'donor' ? 'A+' : 'N/A',
+                    location: 'Kathmandu',
+                    available: true
+                };
+
+                document.getElementById('auth-buttons').classList.add('hidden');
+                document.getElementById('user-menu').classList.remove('hidden');
+                document.getElementById('user-menu').classList.add('flex');
+                
+                document.getElementById('user-name-display').innerText = State.currentUser.name;
+                document.getElementById('user-role-display').innerText = role.replace('_', ' ');
+                
+                this.showToast(`Welcome, ${State.currentUser.name}!`, 'success');
+
+                if (role === 'donor') {
+                    this.setupDonorDashboard();
+                    this.router('donor');
+                } else {
+                    this.loadHospitalData();
+                    this.router('hospital');
+                }
+            },
+
+            logout() {
+                State.currentUser = null;
+                document.getElementById('auth-buttons').classList.remove('hidden');
+                document.getElementById('user-menu').classList.add('hidden');
+                document.getElementById('user-menu').classList.remove('flex');
+                this.router('landing');
+                this.showToast("Logged out successfully", "info");
+            },
+
+            // --- DONOR DASHBOARD LOGIC ---
+            setupDonorDashboard() {
+                const user = State.currentUser;
+                document.getElementById('dash-name').innerText = user.name.split(' ')[0];
+                document.getElementById('dash-blood').innerText = user.bloodType;
+                document.getElementById('dash-loc').innerText = user.location;
+                
+                const toggle = document.getElementById('avail-toggle');
+                toggle.checked = user.available;
+                this.updateStatusUI(user.available);
+
+                // Simulate loading list with skeleton
+                document.getElementById('request-skeleton').classList.remove('hidden-section');
+                document.getElementById('dash-request-list').classList.add('hidden-section');
+
+                setTimeout(() => {
+                    document.getElementById('request-skeleton').classList.add('hidden-section');
+                    document.getElementById('dash-request-list').classList.remove('hidden-section');
+                    this.renderDonorList();
+                }, 1500);
+            },
+
+            toggleAvailability() {
+                const isAvailable = document.getElementById('avail-toggle').checked;
+                State.currentUser.available = isAvailable;
+                this.updateStatusUI(isAvailable);
+                this.showToast(isAvailable ? "You are now visible to hospitals" : "You are marked as Busy", "info");
+            },
+
+            updateStatusUI(isAvailable) {
+                const label = document.getElementById('status-label');
+                const indicator = document.getElementById('status-indicator');
+                
+                if (isAvailable) {
+                    label.innerText = "AVAILABLE";
+                    label.className = "text-green-600 font-bold";
+                    indicator.className = "w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]";
+                } else {
+                    label.innerText = "BUSY";
+                    label.className = "text-red-500 font-bold";
+                    indicator.className = "w-3 h-3 rounded-full bg-red-500";
+                }
+            },
+
+            renderDonorList() {
+                const myType = State.currentUser.bloodType;
+                // Only show ACTIVE requests
+                const relevant = State.requests.filter(r => r.bloodType === myType && r.status === 'Active');
+                const list = document.getElementById('dash-request-list');
+
+                if (relevant.length === 0) {
+                    list.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No active requests for ${myType} right now.</div>`;
                     return;
                 }
-                document.getElementById('mapError').classList.add('hidden'); document.getElementById('mapError').style.display = 'none';
-                if (filtered.length === 0) { container.innerHTML = `<div class="p-12 text-center text-slate-400 animate-fade-in">No active requests found.</div>`; return; }
-                container.innerHTML = filtered.map((s, i) => {
-                    let dist = '';
-                    if (State.userLocation) { const d = Utils.getDistance(State.userLocation.lat, State.userLocation.lng, s.lat, s.lng); if (d) dist = `<span class="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-lg"><i class="fas fa-map-marker-alt"></i> ${d}km</span>`; }
-                    return `<div class="list-item ${s.urgency} animate-slide-in" style="animation-delay: ${i * 50}ms" onclick="Map.map.flyTo([${s.lat}, ${s.lng}], 16)"><div class="flex justify-between items-start mb-2"><div><h4 class="font-bold text-slate-900 text-base">${Utils.safeString(s.hospital)}</h4><p class="text-xs text-slate-500 truncate max-w-[200px]">${Utils.safeString(s.location)}</p></div><span class="badge ${s.urgency === 'critical' ? 'badge-urgent' : s.urgency === 'high' ? 'badge-high' : 'badge-normal'}">${s.urgency}</span></div><div class="flex items-center justify-between mt-4"><div class="flex items-center gap-2"><span class="bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-md">${s.bloodType}</span><span class="text-xs text-slate-500 font-semibold">${s.units} Unit${s.units > 1 ? 's' : ''}</span></div>${dist}</div><div class="flex justify-between items-center mt-4 pt-3 border-t border-slate-50"><span class="text-[10px] text-slate-400 font-bold"><i class="far fa-clock mr-1"></i>${Utils.timeAgo(s.time)}</span>${State.user ? `<button onclick="App.respond('${s.id}'); event.stopPropagation();" class="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1">Respond <i class="fas fa-arrow-right text-[10px]"></i></button>` : ''}</div></div>`;
-                }).join('');
+
+                list.innerHTML = relevant.map(r => `
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 hover:bg-white hover:shadow-md transition-all group cursor-pointer">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-lg font-bold">
+                                ${r.bloodType}
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800">${r.hospital}</h4>
+                                <p class="text-xs text-slate-500">${r.location} • ${r.units} Units</p>
+                            </div>
+                        </div>
+                        <button onclick="App.respond('${r.id}')" class="bg-white border border-slate-200 text-slate-600 hover:bg-red-600 hover:text-white hover:border-red-600 px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-sm">
+                            Help Now
+                        </button>
+                    </div>
+                `).join('');
             },
-            animateCounters() {
-                const counters = document.querySelectorAll('.counter');
-                counters.forEach(counter => {
-                    const target = +counter.getAttribute('data-target');
-                    const duration = 2000; const increment = target / (duration / 16);
-                    let current = 0;
-                    const update = () => { current += increment; if (current < target) { counter.innerText = Math.ceil(current); requestAnimationFrame(update); } else { counter.innerText = target; } };
-                    update();
+
+            respond(id) {
+                this.showToast("Response sent! Hospital will contact you.", "success");
+                const list = document.getElementById('dash-request-list');
+                list.innerHTML = `<div class="text-center py-8 text-green-600 text-sm font-bold bg-green-50 rounded-xl border border-green-100">
+                    <i class="fas fa-check-circle mb-2 text-xl"></i><br>Thank you, Hero!
+                </div>`;
+            },
+
+            // --- HOSPITAL LOGIC ---
+            loadHospitalData() {
+                const list = document.getElementById('hospital-request-list');
+                // Filter for user's hospital AND status Active
+                const myRequests = State.requests.filter(r => r.hospital === State.currentUser.name && r.status === 'Active');
+                
+                if (myRequests.length === 0) {
+                    list.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm">You have no active requests.</div>`;
+                    return;
+                }
+
+                list.innerHTML = myRequests.map(r => `
+                    <div class="p-4 border border-slate-100 rounded-xl flex justify-between items-center bg-slate-50 hover:shadow-sm transition">
+                        <div>
+                            <div class="flex items-center gap-3 mb-1">
+                                <span class="bg-slate-900 text-white text-xs font-bold px-2 py-1 rounded">${r.bloodType}</span>
+                                <span class="text-sm font-bold text-slate-700">${r.units} Units</span>
+                                <span class="text-[10px] uppercase font-bold ${r.urgency==='critical'?'text-red-600':'text-green-600'}">${r.urgency}</span>
+                            </div>
+                            <p class="text-xs text-slate-500">Posted: Just now</p>
+                        </div>
+                        <!-- FULFILLED BUTTON -->
+                        <button onclick="App.fulfillRequest('${r.id}')" class="bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 shadow-sm">
+                            <i class="fas fa-check"></i> Fulfilled
+                        </button>
+                    </div>
+                `).join('');
+            },
+
+            createRequest() {
+                const type = document.getElementById('req-type').value;
+                const units = document.getElementById('req-units').value;
+                const urgency = document.getElementById('req-urgency').value;
+                
+                const newReq = {
+                    id: 'SOS_' + Date.now(),
+                    hospital: State.currentUser.name,
+                    bloodType: type,
+                    units: units,
+                    urgency: urgency,
+                    location: 'Kathmandu',
+                    lat: 27.7172 + (Math.random()*0.01),
+                    lng: 85.3240 + (Math.random()*0.01),
+                    time: new Date(),
+                    status: 'Active'
+                };
+                
+                State.requests.unshift(newReq); 
+                this.refreshMaps(); // Refresh maps to show new pin
+                this.loadHospitalData(); // Refresh list
+                
+                this.showToast("Request Broadcasted to Network!", "success");
+            },
+
+            fulfillRequest(id) {
+                // 1. Update State
+                const reqIndex = State.requests.findIndex(r => r.id === id);
+                if (reqIndex > -1) {
+                    State.requests[reqIndex].status = 'Fulfilled';
+                    
+                    // 2. UI Feedback
+                    this.showToast("Request marked as Fulfilled", "success");
+                    
+                    // 3. Refresh Data
+                    this.loadHospitalData();
+                    this.refreshMaps(); // Removes the pin from the map
+                }
+            },
+
+            // --- MAP LOGIC ---
+            initMaps() {
+                // Main Map
+                State.maps.main = L.map('main-map').setView(CONFIG.center, CONFIG.zoom);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(State.maps.main);
+                State.maps.markersLayer.addTo(State.maps.main); // Add layer group
+
+                // Mini Map
+                State.maps.mini = L.map('mini-map').setView(CONFIG.center, CONFIG.zoom);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(State.maps.mini);
+            },
+
+            loadRequests() {
+                State.requests = getMockRequests();
+                this.renderPublicList();
+                this.refreshMaps();
+            },
+
+            // Clears and rebuilds markers based on current State.requests
+            refreshMaps() {
+                // Clear existing markers
+                State.maps.markersLayer.clearLayers();
+
+                // Filter only Active requests for the map
+                const activeRequests = State.requests.filter(r => r.status === 'Active');
+
+                activeRequests.forEach(req => {
+                    const color = req.urgency === 'critical' ? '#ef4444' : req.urgency === 'high' ? '#f59e0b' : '#10b981';
+                    
+                    const html = `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">${req.bloodType}</div>`;
+                    const icon = L.divIcon({
+                        html: html,
+                        className: 'custom-marker',
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 15]
+                    });
+
+                    // Add to Main Map
+                    if(State.maps.main) {
+                        L.marker([req.lat, req.lng], { icon }).addTo(State.maps.markersLayer)
+                            .bindPopup(`<b>${req.hospital}</b><br>Needs: ${req.units} Units ${req.bloodType}<br>Status: ${req.status}`);
+                    }
+
+                    // Add to Mini Map (if donor and matches blood type)
+                    if(State.maps.mini && State.currentUser && State.currentUser.role === 'donor' && req.bloodType === State.currentUser.bloodType) {
+                        L.marker([req.lat, req.lng], { icon }).addTo(State.maps.mini)
+                            .bindPopup(`<b>${req.hospital}</b><br>Needs: ${req.units} Units ${req.bloodType}`);
+                    }
                 });
             },
-            openModal(id) { document.getElementById(id).classList.add('active'); if (id === 'loginModal') Auth.reset(); },
-            closeModal(id) { document.getElementById(id).classList.remove('active'); },
-            openDashboard() {
-                const content = document.getElementById('dashContent'); const title = document.getElementById('dashTitle'); const subtitle = document.getElementById('dashSubtitle');
-                title.textContent = State.user.role === 'hospital' ? 'Hospital Dashboard' : State.user.role === 'blood_bank' ? 'Blood Bank Dashboard' : 'Donor Profile';
-                subtitle.textContent = State.user.email;
-                if (State.user.role === 'hospital' || State.user.role === 'blood_bank') {
-                    content.innerHTML = `
-                        <div class="space-y-6 animate-fade-in">
-                            <div class="p-5 bg-blue-50 border border-blue-100 rounded-2xl flex items-center gap-4">
-                                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 text-xl"><i class="fas fa-plus"></i></div>
-                                <div><h4 class="font-bold text-blue-900">Post Blood Request</h4><p class="text-xs text-blue-700">Broadcast to verified donors</p></div>
+
+            renderPublicList() {
+                const list = document.getElementById('public-request-list');
+                // Only show Active in public list
+                const active = State.requests.filter(r => r.status === 'Active');
+                
+                list.innerHTML = active.map(r => `
+                    <div class="p-4 rounded-xl border border-slate-100 bg-white shadow-sm flex items-center justify-between hover:shadow-md transition cursor-pointer" onclick="App.flyTo(${r.lat}, ${r.lng})">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm border border-slate-200">
+                                ${r.bloodType}
                             </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div><label class="input-label">Blood Type</label><select id="newType" class="input-field"><option value="A+">A+</option><option value="O+">O+</option><option value="B+">B+</option><option value="AB+">AB+</option><option value="A-">A-</option><option value="O-">O-</option><option value="B-">B-</option><option value="AB-">AB-</option></select></div>
-                                <div><label class="input-label">Units</label><input type="number" id="newUnits" value="2" class="input-field"></div>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-800">${r.hospital}</h4>
+                                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">${r.urgency}</p>
                             </div>
-                            <div><label class="input-label">Urgency</label><select id="newUrgency" class="input-field"><option value="critical">Critical</option><option value="high">High</option><option value="normal">Normal</option></select></div>
-                            <button onclick="App.createRequest()" class="btn bg-blue-600 hover:bg-blue-700 w-full shadow-xl shadow-blue-500/20 py-4 text-lg text-white font-bold rounded-2xl">Post Request Now</button>
-                            <button onclick="App.logout()" class="w-full text-center text-sm text-slate-400 hover:text-red-500 mt-8 font-semibold">Sign Out</button>
-                        </div>`;
-                } else {
-                    content.innerHTML = `<div class="text-center animate-fade-in"><div class="w-24 h-24 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl border-4 border-green-100 shadow-lg"><i class="fas fa-check"></i></div><h4 class="text-2xl font-bold text-slate-900 mb-2">You are a Hero!</h4><p class="text-slate-500 mb-8">We will notify you when <span class="font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded">${State.user.bloodType}</span> is needed in <span class="font-bold">${State.user.location}</span>.</p><div class="bg-slate-50 p-6 rounded-2xl text-left mb-8 space-y-3 border border-slate-100"><div class="flex justify-between text-sm"><span class="text-slate-500 font-bold">Status</span><span class="font-bold text-green-600 flex items-center gap-2"><span class="w-2 h-2 bg-green-500 rounded-full"></span> Active</span></div><div class="flex justify-between text-sm"><span class="text-slate-500 font-bold">Location</span><span class="font-bold text-slate-900">${State.user.location}</span></div></div><button onclick="App.logout()" class="text-sm text-slate-400 hover:text-red-500 font-bold">Sign Out</button></div>`;
-                }
-                this.openModal('dashModal');
+                        </div>
+                        <div class="text-xs text-slate-400 font-medium">${r.units} Units</div>
+                    </div>
+                `).join('');
             },
+
+            flyTo(lat, lng) {
+                if(State.maps.main) {
+                    State.maps.main.flyTo([lat, lng], 15, { duration: 1.5 });
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            },
+
+            // --- UTILS ---
             showToast(msg, type = 'info') {
-                const t = document.getElementById('toast'); const m = document.getElementById('toastMsg'); const i = document.getElementById('toastIcon');
-                m.textContent = msg; t.className = `toast show ${type}`;
-                i.className = type === 'success' ? 'fas fa-check-circle text-green-400' : type === 'error' ? 'fas fa-exclamation-circle text-red-400' : 'fas fa-info-circle text-blue-400';
-                clearTimeout(this.toastTimer); this.toastTimer = setTimeout(() => t.classList.remove('show'), 4000);
+                const toast = document.getElementById('toast');
+                const icon = document.getElementById('toast-icon');
+                const text = document.getElementById('toast-msg');
+                
+                text.innerText = msg;
+                icon.className = type === 'success' ? 'fas fa-check-circle text-green-400' : 
+                                 type === 'error' ? 'fas fa-exclamation-circle text-red-400' : 'fas fa-info-circle text-blue-400';
+                
+                toast.classList.remove('opacity-0', 'translate-y-10');
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-10');
+                }, 3000);
             }
         };
 
-        // --- AUTH ---
-        const Auth = {
-            reset() {
-                State.update({ selectedRole: null });
-                document.querySelectorAll('.auth-step').forEach(el => el.classList.add('hidden'));
-                document.getElementById('authStep0').classList.remove('hidden');
-                const icon = document.getElementById('authIcon');
-                icon.className = "w-20 h-20 rounded-3xl mx-auto mb-6 flex items-center justify-center text-3xl shadow-2xl transition-all duration-500 bg-slate-100 text-slate-400";
-                icon.innerHTML = '<i class="fas fa-users"></i>';
-                document.getElementById('authTitle').textContent = "Welcome";
-                document.getElementById('authSubtitle').textContent = "Select your category to continue";
-                document.getElementById('inputEmail').value = ''; document.getElementById('inputOtp').value = ''; document.getElementById('regName').value = '';
-            },
-            selectRole(role) {
-                State.update({ selectedRole: role });
-                this.transition('authStep1');
-                const title = document.getElementById('authTitle');
-                const subtitle = document.getElementById('authSubtitle');
-                const icon = document.getElementById('authIcon');
-                if (role === 'donor') {
-                    title.textContent = "Donor Login"; subtitle.textContent = "Join the life-saving community";
-                    icon.className = "w-20 h-20 rounded-3xl mx-auto mb-6 flex items-center justify-center text-3xl shadow-2xl transition-all duration-500 bg-rose-100 text-rose-500";
-                    icon.innerHTML = '<i class="fas fa-user"></i>';
-                } else if (role === 'hospital') {
-                    title.textContent = "Hospital Portal"; subtitle.textContent = "Manage blood requests";
-                    icon.className = "w-20 h-20 rounded-3xl mx-auto mb-6 flex items-center justify-center text-3xl shadow-2xl transition-all duration-500 bg-blue-100 text-blue-500";
-                    icon.innerHTML = '<i class="fas fa-hospital"></i>';
-                } else if (role === 'blood_bank') {
-                    title.textContent = "Blood Bank Portal"; subtitle.textContent = "Inventory & Management";
-                    icon.className = "w-20 h-20 rounded-3xl mx-auto mb-6 flex items-center justify-center text-3xl shadow-2xl transition-all duration-500 bg-violet-100 text-violet-500";
-                    icon.innerHTML = '<i class="fas fa-tint"></i>';
-                }
-            },
-            transition(nextId) {
-                const current = document.querySelector('.auth-step:not(.hidden)');
-                if(current) current.classList.add('hidden');
-                document.getElementById(nextId).classList.remove('hidden');
-            },
-            async sendOTP() {
-                const email = document.getElementById('inputEmail').value;
-                if (!Utils.validateEmail(email)) return UI.showToast("Please enter a valid email", 'error');
-                const btn = document.getElementById('btnOtp');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<span class="spinner w-5 h-5 border-2"></span> Sending...';
-                btn.disabled = true;
-                try {
-                    await API.post('sendOTP', { email });
-                    this.transition('authStep2');
-                    document.getElementById('emailDisplay').textContent = email;
-                    UI.showToast("Verification code sent!", 'success');
-                } catch (e) { UI.showToast(e.message, 'error'); } finally {
-                    btn.innerHTML = originalText; btn.disabled = false;
-                }
-            },
-            async verify() {
-                const otp = document.getElementById('inputOtp').value;
-                const email = document.getElementById('emailDisplay').textContent;
-                if (otp.length !== 6) return UI.showToast("Invalid code format", 'error');
-                try {
-                    const res = await API.post('verifyOTP', { email, otp });
-                    if (res.exists) {
-                        this.saveSession(res.user);
-                        UI.closeModal('loginModal');
-                        UI.openDashboard();
-                        UI.showToast("Welcome back!", 'success');
-                    } else {
-                        this.transition('authStep3');
-                        const donorExtras = document.getElementById('donorExtras');
-                        if (State.selectedRole === 'donor') donorExtras.classList.remove('hidden');
-                        else donorExtras.classList.add('hidden');
-                    }
-                } catch (e) { UI.showToast(e.message, 'error'); }
-            },
-            async register() {
-                const payload = {
-                    email: document.getElementById('emailDisplay').textContent,
-                    name: document.getElementById('regName').value,
-                    phone: document.getElementById('regPhone').value,
-                    bloodType: document.getElementById('regBlood').value || 'N/A',
-                    location: document.getElementById('regLoc').value,
-                    role: State.selectedRole
-                };
-                if (!payload.name || !payload.location) return UI.showToast("Please complete all fields", 'error');
-                if (State.selectedRole === 'donor' && !payload.bloodType) return UI.showToast("Blood Type is required for donors", 'error');
-                try {
-                    const res = await API.post('register', payload);
-                    this.saveSession(res.user);
-                    UI.closeModal('loginModal');
-                    UI.openDashboard();
-                    UI.showToast("Account created successfully!", 'success');
-                } catch (e) { UI.showToast(e.message, 'error'); }
-            },
-            saveSession(user) {
-                const expiresAt = new Date(Date.now() + CONFIG.SESSION_EXPIRY_HOURS * 60 * 60 * 1000).toISOString();
-                const session = { ...user, expiresAt };
-                State.update({ user: session });
-                localStorage.setItem('bc_session', JSON.stringify(session));
-                if (Notification.permission !== 'granted') Notification.requestPermission();
-            }
-        };
+        // Initialize App on Load
+        window.addEventListener('DOMContentLoaded', () => {
+            App.init();
+        });
 
-        // --- APP ---
-        const App = {
-            init() { Map.init(); UI.init(); this.pollData(); setInterval(() => this.pollData(), CONFIG.POLL_INTERVAL); },
-            async pollData() {
-                try {
-                    const res = await API.post('getSOS');
-                    State.update({ sos: res.requests, error: null });
-                    if (Notification.permission === 'granted' && res.requests.length > State.sos.length) {
-                        new Notification("New Blood Request", { body: `${res.requests[0].bloodType} needed at ${res.requests[0].hospital}` });
-                    }
-                } catch (e) { State.update({ error: e.message }); }
-            },
-            async createRequest() {
-                const data = {
-                    hospital: State.user.name || 'Hospital',
-                    bloodType: document.getElementById('newType').value,
-                    units: document.getElementById('newUnits').value,
-                    urgency: document.getElementById('newUrgency').value,
-                    location: State.user.location || 'Kathmandu'
-                };
-                try {
-                    await API.post('createSOS', data);
-                    UI.showToast("Request Posted!", 'success');
-                    UI.closeModal('dashModal');
-                    this.pollData();
-                } catch (e) { UI.showToast(e.message, 'error'); }
-            },
-            async respond(id) {
-                try { await API.post('respondSOS', { sosId: id }); UI.showToast("Response Recorded. Thank you!", 'success'); } 
-                catch (e) { UI.showToast(e.message, 'error'); }
-            },
-            retry() { State.update({ error: null }); this.pollData(); },
-            handleAuthClick() { State.user ? UI.openDashboard() : UI.openModal('loginModal'); },
-            logout() { localStorage.removeItem('bc_session'); State.update({ user: null }); UI.closeModal('dashModal'); UI.showToast("Logged out successfully", 'success'); }
-        };
-
-        window.addEventListener('DOMContentLoaded', () => App.init());
     </script>
 </body>
 </html>
