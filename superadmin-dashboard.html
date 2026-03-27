@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>National Command Center | Blood Connect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        :root { --primary: #4f46e5; --bg: #0f172a; --text: #e2e8f0; --card: #1e293b; }
+        body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); }
+        .card { background: var(--card); border: 1px solid #334155; border-radius: 12px; }
+        .btn { padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; border:none; }
+        .btn-green { background: #10b981; color: white; }
+        .btn-red { background: #ef4444; color: white; }
+        #map { height: 60vh; width: 100%; border-radius: 12px; border: 1px solid #334155; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-indigo-500 rounded flex items-center justify-center"><i class="fas fa-shield-alt text-white"></i></div>
+            <h1 class="font-bold text-lg">National Command Center</h1>
+        </div>
+        <button onclick="App.logout()" class="text-slate-400 hover:text-white text-sm">Logout</button>
+    </nav>
+
+    <main class="p-6 max-w-7xl mx-auto">
+        
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="card p-4 text-center">
+                <div class="text-3xl font-bold text-indigo-400" id="statUsers">-</div>
+                <div class="text-xs text-slate-400 uppercase mt-1">Total Users</div>
+            </div>
+            <div class="card p-4 text-center">
+                <div class="text-3xl font-bold text-red-500" id="statActive">-</div>
+                <div class="text-xs text-slate-400 uppercase mt-1">Active Requests</div>
+            </div>
+            <div class="card p-4 text-center">
+                <div class="text-3xl font-bold text-yellow-500" id="statPending">-</div>
+                <div class="text-xs text-slate-400 uppercase mt-1">Pending Approval</div>
+            </div>
+            <div class="card p-4 text-center">
+                <div class="text-3xl font-bold text-green-500" id="statStock">-</div>
+                <div class="text-xs text-slate-400 uppercase mt-1">Hospitals Active</div>
+            </div>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="grid lg:grid-cols-3 gap-6">
+            <!-- Map -->
+            <div class="lg:col-span-2 card p-2">
+                <div id="map"></div>
+            </div>
+
+            <!-- Verification Queue -->
+            <div class="card p-4">
+                <h3 class="font-bold text-lg mb-4 border-b border-slate-700 pb-2">Verification Queue</h3>
+                <div id="pendingList" class="space-y-3 h-[60vh] overflow-y-auto pr-2">
+                    <!-- Pending requests load here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const CONFIG = { SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyFrRsw-Ru2PeQcfYgTZ0PdPMhwWE7ID-0cvxdl74blLNTwUn4Gd8bhwZmM1PwdGX1J/exec' };
+        const State = { user: null };
+
+        const App = {
+            init() {
+                const saved = localStorage.getItem('bc_session');
+                if(!saved) return window.location.href = 'index.html';
+                State.user = JSON.parse(saved);
+                if(State.user.role !== 'superadmin') return window.location.href = 'index.html';
+                
+                this.initMap();
+                this.loadStats();
+                this.loadPending();
+            },
+
+            initMap() {
+                this.map = L.map('map').setView([28.3949, 84.1240], 6); // Nepal View
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+                this.markers = L.layerGroup().addTo(this.map);
+            },
+
+            async loadStats() {
+                const res = await this.post('getStats');
+                if(res.success) {
+                    document.getElementById('statUsers').innerText = res.totalUsers;
+                    document.getElementById('statActive').innerText = res.activeSOS;
+                    // Count pending locally or add backend count
+                }
+            },
+
+            async loadPending() {
+                // Fetch ALL SOS and filter for Pending (Admin sees all)
+                const res = await this.post('getSOS'); 
+                // Note: In V5 backend, getSOS filters out Pending. 
+                // For Admin, we might need a 'getAllSOS' endpoint or modify 'getSOS' to accept a role param.
+                // For now, let's assume backend allows admin to see all, or we mock it.
+                
+                // MOCKING PENDING FOR DEMO (Since getSOS hides pending in V5 logic)
+                const list = document.getElementById('pendingList');
+                list.innerHTML = `
+                    <div class="bg-slate-800 p-4 rounded border-l-4 border-yellow-500">
+                        <div class="flex justify-between mb-2">
+                            <span class="font-bold text-white">Grande Hospital</span>
+                            <span class="text-xs bg-yellow-500 text-black px-2 py-0.5 rounded font-bold">PENDING</span>
+                        </div>
+                        <p class="text-sm text-slate-400 mb-2">Need: 2 Units A+</p>
+                        <div class="flex gap-2">
+                            <button onclick="App.verify('SOS_123')" class="btn btn-green text-xs w-full">Verify</button>
+                            <button class="btn btn-red text-xs w-full">Reject</button>
+                        </div>
+                    </div>
+                `;
+            },
+
+            async verify(id) {
+                const res = await this.post('verifySOS', { sosId: id });
+                alert(res.success ? "Verified & Alerts Sent" : "Error");
+                this.loadPending();
+            },
+
+            async post(action, data) {
+                const payload = { action, ...data, userId: State.user.id, token: State.user.token };
+                try {
+                    const req = await fetch(CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                    return await req.json();
+                } catch(e) { return { success: false, error: e.message }; }
+            },
+
+            logout() {
+                localStorage.removeItem('bc_session');
+                window.location.href = 'index.html';
+            }
+        };
+
+        window.onload = () => App.init();
+    </script>
+</body>
+</html>
