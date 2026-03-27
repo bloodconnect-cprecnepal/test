@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>National Command Center | Analytics</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --admin-primary: #4f46e5;
+            --bg-body: #f1f5f9;
+            --text-main: #0f172a;
+        }
+        body { font-family: 'Outfit', sans-serif; background-color: var(--bg-body); color: var(--text-main); }
+        
+        .admin-nav { background: #0f172a; border-bottom: 1px solid #334155; }
+        
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+
+        /* Tab Styling */
+        .tab-btn { padding: 0.75rem 1.5rem; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .tab-btn:hover { color: #0f172a; background: #f8fafc; }
+        .tab-btn.active { color: #4f46e5; border-bottom-color: #4f46e5; background: #eff6ff; }
+
+        /* Chart Container */
+        .chart-container { position: relative; height: 300px; width: 100%; }
+
+        .hidden-section { display: none !important; }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- NAVBAR -->
+    <nav class="admin-nav sticky top-0 z-50 shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3 cursor-pointer">
+                <div class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/50">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-white leading-none">Command Center</h1>
+                    <span class="text-[10px] font-bold text-indigo-400 tracking-widest uppercase">Super Admin</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 px-3 py-1 bg-slate-800 rounded-full border border-slate-700">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    <span class="text-xs text-slate-300 font-mono">SYSTEM ONLINE</span>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-slate-300">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- TABS -->
+    <div class="bg-white border-b border-slate-200 shadow-sm sticky top-16 z-40">
+        <div class="max-w-7xl mx-auto px-4 flex gap-8">
+            <button onclick="App.switchTab('live')" id="tab-live" class="tab-btn active">
+                <i class="fas fa-satellite-dish mr-2"></i> Live View
+            </button>
+            <button onclick="App.switchTab('analytics')" id="tab-analytics" class="tab-btn">
+                <i class="fas fa-chart-line mr-2"></i> Analytics
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full fade-in relative">
+        
+        <!-- ======================= LIVE VIEW ======================= -->
+        <div id="view-live">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900">Network Overview</h2>
+                    <p class="text-slate-500 text-sm">Real-time monitoring of Blood Connect Nepal.</p>
+                </div>
+                <button onclick="App.refreshData()" class="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-50 shadow-sm transition flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+
+            <!-- Live Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div><div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Requests</div><div class="text-3xl font-extrabold text-slate-800 mt-1" id="stat-total">0</div></div>
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-list-alt"></i></div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div><div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Critical</div><div class="text-3xl font-extrabold text-red-600 mt-1" id="stat-critical">0</div></div>
+                    <div class="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-xl"><i class="fas fa-exclamation-triangle"></i></div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div><div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Hospitals</div><div class="text-3xl font-extrabold text-slate-800 mt-1" id="stat-hospitals">0</div></div>
+                    <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl"><i class="fas fa-hospital-symbol"></i></div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+                    <div><div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Fulfilled Today</div><div class="text-3xl font-extrabold text-green-600 mt-1" id="stat-fulfilled">0</div></div>
+                    <div class="w-12 h-12 rounded-xl bg-green-50 text-green-600 flex items-center justify-center text-xl"><i class="fas fa-check-circle"></i></div>
+                </div>
+            </div>
+
+            <!-- Live Map -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8 h-[400px] relative">
+                <div class="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg shadow-sm border border-slate-100">
+                    <span class="text-xs font-bold text-slate-600"><i class="fas fa-globe-asia mr-1 text-indigo-500"></i> National View (Nepal)</span>
+                </div>
+                <div id="admin-map" class="w-full h-full bg-slate-100"></div>
+            </div>
+
+            <!-- Live Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-6 border-b border-slate-100">
+                    <h3 class="font-bold text-lg text-slate-800">Live Request Logs</h3>
+                </div>
+                <div class="overflow-x-auto custom-scroll">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs uppercase font-bold tracking-wider border-b border-slate-200">
+                                <th class="p-4">Status</th>
+                                <th class="p-4">Hospital</th>
+                                <th class="p-4">Type/Units</th>
+                                <th class="p-4">Time</th>
+                                <th class="p-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-request-table" class="text-sm divide-y divide-slate-100">
+                            <!-- Populated JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================= ANALYTICS VIEW ======================= -->
+        <div id="view-analytics" class="hidden-section">
+            
+            <!-- Filters -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4 items-end justify-between">
+                <div class="flex flex-wrap gap-4 w-full md:w-auto">
+                    <div class="flex-1 min-w-[150px]">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Time Range</label>
+                        <select id="analytics-range" onchange="Analytics.handleRangeChange()" class="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                            <option value="hourly">Last 24 Hours</option>
+                            <option value="daily" selected>Last 7 Days</option>
+                            <option value="monthly">Last 6 Months</option>
+                            <option value="yearly">Last 5 Years</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    <div id="custom-date-container" class="hidden flex gap-2">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Start</label>
+                            <input type="date" id="start-date" class="p-2 border border-slate-300 rounded-lg text-sm outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">End</label>
+                            <input type="date" id="end-date" class="p-2 border border-slate-300 rounded-lg text-sm outline-none">
+                        </div>
+                    </div>
+                </div>
+                <button onclick="Analytics.update()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-lg shadow-indigo-500/30 transition">
+                    Update Charts
+                </button>
+            </div>
+
+            <!-- Analytics KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="text-xs font-bold text-slate-400 uppercase">Total Volume</div>
+                    <div class="text-2xl font-extrabold text-indigo-600" id="ana-total">0</div>
+                    <div class="text-xs text-green-500 mt-1 font-semibold"><i class="fas fa-arrow-up"></i> 12% vs prev</div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="text-xs font-bold text-slate-400 uppercase">Avg. Daily</div>
+                    <div class="text-2xl font-extrabold text-slate-800" id="ana-avg">0</div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="text-xs font-bold text-slate-400 uppercase">Most Needed</div>
+                    <div class="text-2xl font-extrabold text-red-600" id="ana-top-type">A+</div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="text-xs font-bold text-slate-400 uppercase">Fulfillment Rate</div>
+                    <div class="text-2xl font-extrabold text-green-600" id="ana-rate">0%</div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Trend Line Chart -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-800 mb-4">Request Volume Trend</h3>
+                    <div class="chart-container">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Distribution Doughnut -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-800 mb-4">Blood Type Distribution</h3>
+                    <div class="chart-container relative flex justify-center">
+                        <canvas id="typeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hospital Ranking Bar Chart -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-800 mb-4">Top Requesting Hospitals</h3>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="hospitalChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed bottom-8 right-8 bg-slate-900 text-white px-6 py-3 rounded-lg shadow-2xl z-[200] flex items-center gap-3 transition-all duration-300 opacity-0 translate-y-10 pointer-events-none max-w-sm">
+        <i id="toast-icon" class="fas fa-info-circle"></i>
+        <span id="toast-msg" class="text-sm font-medium">Notification</span>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        const CONFIG = {
+            SCRIPT_URL: "https://script.google.com/macros/s/AKfycby_6Bf3VfWXX_7eHTJ7QxkK18GLCVtwwJx-0mmqqwGFa8aM7uSzJmNeP5vopnnpPPdy/exec",
+            center: [28.3949, 84.1240],
+            zoom: 6
+        };
+
+        const State = {
+            requests: [],
+            map: null,
+            markersLayer: L.layerGroup(),
+            charts: {}
+        };
+
+        const API = {
+            async call(action, data = {}) {
+                try {
+                    const res = await fetch(CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action, ...data }) });
+                    return await res.json();
+                } catch (e) { return { success: false, error: "Connection Failed" }; }
+            }
+        };
+
+        /* ================= ANALYTICS ENGINE ================= */
+        const Analytics = {
+            trendChart: null,
+            typeChart: null,
+            hospitalChart: null,
+
+            init() {
+                this.initCharts();
+                this.update(); // Initial load
+            },
+
+            handleRangeChange() {
+                const val = document.getElementById('analytics-range').value;
+                const customContainer = document.getElementById('custom-date-container');
+                if (val === 'custom') customContainer.classList.remove('hidden');
+                else customContainer.classList.add('hidden');
+            },
+
+            // Generates simulated historical data based on current active requests
+            // In a real production app, this would fetch from a 'History' sheet in GAS
+            generateData(range) {
+                const now = new Date();
+                let labels = [];
+                let dataPoints = [];
+                let count = 0;
+
+                // Helper to randomize data
+                const r = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
+
+                if (range === 'hourly') {
+                    for (let i = 23; i >= 0; i--) {
+                        const d = new Date(now.getTime() - i * 3600000);
+                        labels.push(d.getHours() + ':00');
+                        dataPoints.push(r(2, 15)); // Simulate requests per hour
+                    }
+                } else if (range === 'daily') {
+                    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    for (let i = 6; i >= 0; i--) {
+                        const d = new Date(now.getTime() - i * 86400000);
+                        labels.push(days[d.getDay()]);
+                        dataPoints.push(r(20, 50));
+                    }
+                } else if (range === 'monthly') {
+                    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+                    labels = months;
+                    dataPoints = months.map(() => r(100, 300));
+                } else if (range === 'yearly') {
+                    labels = ['2020', '2021', '2022', '2023', '2024'];
+                    dataPoints = [1200, 1450, 1300, 1800, 2100];
+                } else {
+                    // Custom (Simulate 5 days for demo)
+                    labels = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'];
+                    dataPoints = [15, 22, 18, 25, 30];
+                }
+                
+                return { labels, dataPoints };
+            },
+
+            initCharts() {
+                // 1. Trend Chart
+                const ctxTrend = document.getElementById('trendChart').getContext('2d');
+                this.trendChart = new Chart(ctxTrend, {
+                    type: 'line',
+                    data: { labels: [], datasets: [] },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, grid: { borderDash: [2, 4] } }, x: { grid: { display: false } } }
+                    }
+                });
+
+                // 2. Type Distribution
+                const ctxType = document.getElementById('typeChart').getContext('2d');
+                this.typeChart = new Chart(ctxType, {
+                    type: 'doughnut',
+                    data: { labels: [], datasets: [] },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+
+                // 3. Hospital Ranking
+                const ctxHosp = document.getElementById('hospitalChart').getContext('2d');
+                this.hospitalChart = new Chart(ctxHosp, {
+                    type: 'bar',
+                    data: { labels: [], datasets: [] },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { x: { beginAtZero: true } }
+                    }
+                });
+            },
+
+            update() {
+                const range = document.getElementById('analytics-range').value;
+                
+                // 1. Update Trend Chart
+                const trendData = this.generateData(range);
+                this.trendChart.data = {
+                    labels: trendData.labels,
+                    datasets: [{
+                        label: 'Requests',
+                        data: trendData.dataPoints,
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                };
+                this.trendChart.update();
+
+                // 2. Update Type Distribution (Based on Real Live Data)
+                const typeCounts = { 'A+':0, 'B+':0, 'AB+':0, 'O+':0, 'A-':0, 'B-':0, 'AB-':0, 'O-':0 };
+                State.requests.forEach(r => {
+                    if (typeCounts[r.bloodType] !== undefined) typeCounts[r.bloodType]++;
+                });
+                // Add some dummy data if empty
+                if (State.requests.length < 3) {
+                    typeCounts['A+'] += 15; typeCounts['B+'] += 10; typeCounts['O+'] += 20;
+                }
+
+                this.typeChart.data = {
+                    labels: Object.keys(typeCounts),
+                    datasets: [{
+                        data: Object.values(typeCounts),
+                        backgroundColor: ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#06b6d4', '#3b82f6'],
+                        borderWidth: 0
+                    }]
+                };
+                this.typeChart.update();
+
+                // 3. Update Hospital Ranking (Based on Real Live Data)
+                const hospCounts = {};
+                State.requests.forEach(r => {
+                    hospCounts[r.hospital] = (hospCounts[r.hospital] || 0) + 1;
+                });
+                // Sort and take top 5
+                const sortedHosp = Object.entries(hospCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
+                // Mock if empty
+                const hospLabels = sortedHosp.length ? sortedHosp.map(x => x[0]) : ['Grande', 'TU Teaching', 'Patan', 'B&B', 'Medicare'];
+                const hospData = sortedHosp.length ? sortedHosp.map(x => x[1]) : [12, 8, 5, 4, 2];
+
+                this.hospitalChart.data = {
+                    labels: hospLabels,
+                    datasets: [{
+                        label: 'Requests',
+                        data: hospData,
+                        backgroundColor: '#6366f1',
+                        borderRadius: 4
+                    }]
+                };
+                this.hospitalChart.update();
+
+                // 4. Update KPI Cards
+                const total = trendData.dataPoints.reduce((a,b)=>a+b, 0);
+                document.getElementById('ana-total').innerText = total;
+                document.getElementById('ana-avg').innerText = Math.round(total / (trendData.labels.length || 1));
+                
+                // Find top blood type
+                const topType = Object.keys(typeCounts).reduce((a, b) => typeCounts[a] > typeCounts[b] ? a : b);
+                document.getElementById('ana-top-type').innerText = topType;
+                
+                // Simulate fulfillment rate
+                document.getElementById('ana-rate').innerText = (85 + Math.random() * 10).toFixed(1) + "%";
+            }
+        };
+
+        /* ================= APP CONTROLLER ================= */
+        const App = {
+            init() {
+                this.initMap();
+                this.refreshData();
+                Analytics.init();
+            },
+
+            switchTab(tab) {
+                // Update Buttons
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById(`tab-${tab}`).classList.add('active');
+
+                // Toggle Views
+                const live = document.getElementById('view-live');
+                const ana = document.getElementById('view-analytics');
+
+                if (tab === 'live') {
+                    live.classList.remove('hidden-section');
+                    ana.classList.add('hidden-section');
+                    if (State.map) setTimeout(() => State.map.invalidateSize(), 100);
+                } else {
+                    live.classList.add('hidden-section');
+                    ana.classList.remove('hidden-section');
+                    Analytics.update(); // Refresh charts on view
+                }
+            },
+
+            initMap() {
+                State.map = L.map('admin-map').setView(CONFIG.center, CONFIG.zoom);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(State.map);
+                State.markersLayer.addTo(State.map);
+            },
+
+            async refreshData() {
+                const res = await API.call('getSOS');
+                if (res.success) {
+                    State.requests = res.requests;
+                    this.renderStats();
+                    this.renderMap();
+                    this.renderTable();
+                } else { this.showToast("Failed to load data", "error"); }
+            },
+
+            renderStats() {
+                const total = State.requests.length;
+                const critical = State.requests.filter(r => r.urgency === 'critical' && r.status !== 'Fulfilled').length;
+                const fulfilled = State.requests.filter(r => r.status === 'Fulfilled').length;
+                const uniqueHospitals = [...new Set(State.requests.map(r => r.hospital))].length;
+
+                document.getElementById('stat-total').innerText = total;
+                document.getElementById('stat-critical').innerText = critical;
+                document.getElementById('stat-hospitals').innerText = uniqueHospitals;
+                document.getElementById('stat-fulfilled').innerText = fulfilled;
+            },
+
+            renderMap() {
+                State.markersLayer.clearLayers();
+                State.requests.forEach(r => {
+                    if(r.status === 'Fulfilled') return;
+                    const color = r.urgency === 'critical' ? '#ef4444' : r.urgency === 'high' ? '#f59e0b' : '#3b82f6';
+                    const html = `<div style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`;
+                    const icon = L.divIcon({ html: html, className: 'admin-marker', iconSize: [14, 14], iconAnchor: [7, 7] });
+                    if(State.map) {
+                        L.marker([r.lat, r.lng], { icon }).addTo(State.markersLayer)
+                            .bindPopup(`<b>${r.hospital}</b><br>${r.bloodType} (${r.units})`);
+                    }
+                });
+            },
+
+            renderTable() {
+                const tbody = document.getElementById('admin-request-table');
+                if (State.requests.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">No active requests.</td></tr>`;
+                    return;
+                }
+                const sorted = [...State.requests].sort((a, b) => new Date(b.time) - new Date(a.time));
+                tbody.innerHTML = sorted.map(r => {
+                    const isFulfilled = r.status === 'Fulfilled';
+                    const statusColor = isFulfilled ? 'bg-green-100 text-green-700' : (r.urgency === 'critical' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700');
+                    const timeString = r.time ? new Date(r.time).toLocaleString() : 'Unknown';
+                    return `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold uppercase ${statusColor}">${isFulfilled ? 'Fulfilled' : r.urgency}</span></td>
+                        <td class="p-4 font-semibold text-slate-800">${r.hospital}</td>
+                        <td class="p-4"><span class="font-bold text-slate-900">${r.bloodType}</span> <span class="text-slate-400 text-xs">x${r.units}</span></td>
+                        <td class="p-4 text-slate-400 text-xs">${timeString}</td>
+                        <td class="p-4 text-right">
+                            ${!isFulfilled ? `<button onclick="App.forceFulfill('${r.id}')" class="text-xs bg-slate-200 hover:bg-green-600 hover:text-white text-slate-700 px-3 py-1.5 rounded transition font-bold">Fulfill</button>` : '<span class="text-xs text-green-600 font-bold">Done</span>'}
+                        </td>
+                    </tr>`;
+                }).join('');
+            },
+
+            async forceFulfill(id) {
+                if(!confirm("Admin Override: Mark as Fulfilled?")) return;
+                const res = await API.call('fulfillSOS', { sosId: id });
+                if (res.success) {
+                    this.showToast("Request Fulfilled", "success");
+                    this.refreshData();
+                } else { this.showToast("Failed: " + res.error, "error"); }
+            },
+
+            showToast(msg, type = 'info') {
+                const toast = document.getElementById('toast');
+                const icon = document.getElementById('toast-icon');
+                const text = document.getElementById('toast-msg');
+                text.innerText = msg;
+                icon.className = type === 'success' ? 'fas fa-check-circle text-green-400' : (type === 'error' ? 'fas fa-exclamation-circle text-red-400' : 'fas fa-info-circle text-blue-400');
+                toast.classList.remove('opacity-0', 'translate-y-10');
+                setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-10'); }, 3000);
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => App.init());
+    </script>
+</body>
+</html>
