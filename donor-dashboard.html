@@ -41,8 +41,13 @@
         <div class="mb-8">
             <h2 class="text-3xl font-bold text-slate-900 mb-2">Welcome, <span id="userName" class="text-red-600"></span>!</h2>
             <p class="text-slate-500">Thank you for being a hero. Your profile is active and ready to help.</p>
+      
         </div>
-
+<div class="stat-box cursor-pointer hover:bg-slate-50 transition-colors" onclick="App.toggleAvailability()">
+    <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">My Status</div>
+    <div id="availabilityStatus" class="text-xl font-bold text-slate-800">Checking...</div>
+    <div class="text-xs text-slate-400 mt-1">Click to Toggle</div>
+</div>
         <!-- Stats Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             <div class="stat-box">
@@ -77,6 +82,15 @@
                 <button onclick="window.location.href='index.html'" class="btn btn-outline">
                     <i class="fas fa-map"></i> Go to Live Map
                 </button>
+
+                async toggleAvailability() {
+    const res = await API.post('toggleAvailability');
+    if(res.success) {
+        const statusEl = document.getElementById('availabilityStatus');
+        statusEl.innerText = res.available ? "AVAILABLE" : "BUSY";
+        statusEl.className = `text-xl font-bold ${res.available ? 'text-green-600' : 'text-red-500'}`;
+    }
+}
             </div>
         </div>
 
